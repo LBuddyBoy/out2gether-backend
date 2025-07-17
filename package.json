@@ -1,0 +1,30 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --env-file=.env server.js",
+    "dev": "node --watch --env-file=.env server.js",
+    "db:schema": "psql -d fullstack_employees -f ./db/schema.sql",
+    "db:seed": "node --env-file=.env db/seed.js",
+    "db:reset": "npm run db:schema && npm run db:seed"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.16.2",
+    "vitest": "^3.2.4"
+  },
+  "imports": {
+    "#*": "./*.js"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.8.0"
+  }
+}
