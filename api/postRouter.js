@@ -1,8 +1,8 @@
 import {
   createPost,
   deletePostById,
-  getAllPosts,
   getPostById,
+  getPosts,
   updatePost,
 } from "#db/query/posts";
 import express from "express";
@@ -17,7 +17,7 @@ const router = express.Router();
 router
   .route("/")
   .get(async (req, res) => {
-    const posts = await getAllPosts();
+    const posts = await getPosts();
 
     res.status(200).json(posts);
   })
@@ -33,8 +33,8 @@ router
       "state",
       "city",
       "zip_code",
-      "geolocation_latitude",
       "geolocation_longitude",
+      "geolocation_latitude",
     ]),
     async (req, res) => {
       const post = await createPost(req.body);

@@ -1,24 +1,58 @@
 import db from "#db/client";
 
-const allowedFields = ["user_id", "title", "body", "price", "date"];
+const allowedFields = [
+  "user_id",
+  "category_id",
+  "title",
+  "body",
+  "price",
+  "date",
+];
 
-export async function createPost({ user_id, title, body, price, date }) {
+/**
+ * Creates a new post
+ *
+ * @param {Object} params
+ * @param {number} params.user_id
+ * @param {number} params.category_id
+ * @param {number} params.title
+ * @param {number} params.body
+ * @param {number} params.price
+ * @param {number} params.date
+ *
+ * @returns {Promise<Object>} the post created
+ */
+export async function createPost({
+  user_id,
+  category_id,
+  title,
+  body,
+  price,
+  date,
+}) {
   const SQL = `
     INSERT INTO posts
-      (user_id, title, body, price, date)
+      (user_id, category_id, title, body, price, date)
     VALUES
-      ($1, $2, $3, $4, $5)
+      ($1, $2, $3, $4, $5, $6)
     RETURNING *
     `;
 
   const {
     rows: [post],
-  } = await db.query(SQL, [user_id, title, body, price, date]);
+  } = await db.query(SQL, [user_id, category_id, title, body, price, date]);
 
   return post;
 }
 
-export async function getAllPosts() {
+/**
+ * Gets all posts
+ *
+ * @returns {Promise<Object[]>} the posts found
+ */
+export async function getPosts() {
+  // TODO: Add pagination
+
   const SQL = `
     SELECT posts.*, row_to_json(post_locations) AS location
     FROM posts
@@ -30,6 +64,13 @@ export async function getAllPosts() {
   return rows;
 }
 
+/**
+ * Finds a post by it's id
+ *
+ * @param {number} id the id of the post to query
+ *
+ * @returns {Promise<Object>} the post that was found
+ */
 export async function getPostById(id) {
   const SQL = `
   SELECT *
@@ -44,6 +85,14 @@ export async function getPostById(id) {
   return post;
 }
 
+/**
+ * Updates a post based on the fields
+ *
+ * @param {number} id
+ * @param {Object} fields
+ * 
+ * @returns {Promise<Object>} the updated post
+ */
 export async function updatePost(id, fields) {
   const updates = Object.entries(fields).filter(
     ([k, v]) => k != null && v != null && allowedFields.includes(k)
@@ -65,6 +114,13 @@ export async function updatePost(id, fields) {
   return post;
 }
 
+/**
+ * Deletes a post by the id
+ * 
+ * @param {number} id 
+ * 
+ * @returns {Promise<Object|undefined>} returns an object if it's deleted undefined if there was an error.
+ */
 export async function deletePostById(id) {
   const SQL = `
     DELETE FROM posts

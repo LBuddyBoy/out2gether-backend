@@ -3,6 +3,7 @@ import { base, de, de_CH, en, Faker } from "@faker-js/faker";
 import { createUser } from "#db/query/users";
 import { createPost } from "#db/query/posts";
 import { createPostLocation } from "#db/query/post_locations";
+import { createCategory } from "./query/categories";
 
 const customLocale = {
   title: "My custom locale",
@@ -21,6 +22,18 @@ await db.end();
 console.log("🌱 Database seeded.");
 
 async function seed() {
+  const categories = [
+    {
+      name: "Date Night",
+      description: "A category filled with romantic date nights",
+    },
+    {
+      name: "Escape Reality",
+      description:
+        "A category filled with only activities you'd see in a movie.",
+    },
+  ];
+
   const accounts = [
     {
       username: "Admin",
@@ -37,9 +50,16 @@ async function seed() {
     await createUser(account);
   }
 
+  for (const index in categories) {
+    const category = categories[index];
+
+    await createCategory(category);
+  }
+
   for (let index = 0; index < 10; index++) {
     const post = {
       user_id: 1,
+      category_id: 1,
       title: customFaker.commerce.productName(),
       body: customFaker.commerce.productDescription(),
       price: customFaker.number.float({ min: 10, max: 100, fractionDigits: 2 }),

@@ -10,8 +10,8 @@ CREATE TABLE users(
     email text NOT NULL UNIQUE,
     password text NOT NULL,
     avatar_url text NOT NULL DEFAULT 'https://www.gravatar.com/avatar/?d=mp&s=64',
-    geolocation_latitude decimal(9, 6),
     geolocation_longitude decimal(9, 6),
+    geolocation_latitude decimal(9, 6),
     is_admin boolean NOT NULL DEFAULT false
 );
 
@@ -39,6 +39,6 @@ CREATE TABLE post_locations(
     state text NOT NULL,
     city text NOT NULL,
     zip_code varchar(20) NOT NULL,
-    geolocation_latitude decimal(9, 6) NOT NULL,
-    geolocation_longitude decimal(9, 6) NOT NULL
+    geolocation_longitude decimal(9, 6) NOT NULL,
+    geolocation_latitude decimal(9, 6) NOT NULL
 );

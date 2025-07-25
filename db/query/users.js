@@ -1,16 +1,30 @@
 import db from "#db/client";
 
+export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
+
+/**
+ * Creates a new user
+ * 
+ * @param {Object} params
+ * @param {string} params.username
+ * @param {string} params.email
+ * @param {string} params.password
+ * @param {number} params.geolocation_longitude the longitude of the user (e.g., -32.0715)
+ * @param {number} params.geolocation_latitude the latitude of the user (e.g., 20.9511)
+ *
+ * @returns {Promise<Object>} The created user object (public fields only).
+ */
 export async function createUser({
   username,
   email,
   password,
-  geolocation_latitude,
   geolocation_longitude,
+  geolocation_latitude,
 }) {
   const SQL = `
-    INSERT INTO users(username, email, password, geolocation_latitude, geolocation_longitude)
+    INSERT INTO users(username, email, password, geolocation_longitude, geolocation_latitude)
     VALUES($1, $2, crypt($3, gen_salt('bf')), $4, $5)
-    RETURNING *
+    RETURNING ${PUBLIC_USER_RETURNS}
     `;
 
   const {
@@ -19,16 +33,23 @@ export async function createUser({
     username,
     email,
     password,
-    geolocation_latitude,
     geolocation_longitude,
+    geolocation_latitude,
   ]);
 
   return user;
 }
 
+/**
+ * Finds a user based on their id
+ * 
+ * @param {any} id the id of the user to query
+ * 
+ * @returns {Promise<Object>} The found user object (public fields only).
+ */
 export async function getUserById(id) {
   const SQL = `
-    SELECT *
+    SELECT ${PUBLIC_USER_RETURNS}
     FROM users
     WHERE id = $1
     `;
@@ -40,6 +61,15 @@ export async function getUserById(id) {
   return user;
 }
 
+/**
+ * Validates an account based on the email and password
+ * 
+ * @param {Object} params
+ * @param {string} params.email the email of the user
+ * @param {string} params.password the plain password of the user
+ * 
+ * @returns {Promise<Object>} The found user object.
+ */
 export async function validateAccount({ email, password }) {
   const SQL = `
     SELECT *

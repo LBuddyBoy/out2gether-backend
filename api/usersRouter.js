@@ -5,11 +5,11 @@ import { createJWT, validateJWT } from "#util/jwt";
 const router = express.Router();
 
 /**
- * 
+ *
  * Creates a user based on the provided body
- * 
+ *
  * Response Body
- * 
+ *
  * {
  *  id
  *  username
@@ -18,7 +18,7 @@ const router = express.Router();
  *  geolocation_latitude
  *  geolocation_longitude
  * }
- * 
+ *
  */
 router.post(
   "/register",
@@ -30,16 +30,18 @@ router.post(
     "geolocation_longitude",
   ]),
   async (req, res) => {
-    res.status(201).json(await createUser(req.body));
+    const user = await createUser(req.body);
+    if (!user) return;
+    res.status(201).json();
   }
 );
 
 /**
- * 
+ *
  * Creates a jwt token for the user logging in
- * 
+ *
  * Response Body
- * 
+ *
  * {
  *  jwt
  *  user {
@@ -51,7 +53,7 @@ router.post(
  *    geolocation_longitude
  *  }
  * }
- * 
+ *
  */
 router.post("/login", requireBody(["email", "password"]), async (req, res) => {
   const user = await validateAccount(req.body);

@@ -1,5 +1,14 @@
 import db from "#db/client";
 
+/**
+ * Creates a new category for filtering
+ * 
+ * @param {Object} params
+ * @param {string} params.name
+ * @param {string} params.description
+ *  
+ * @returns {Promise<Object>} the created category
+ */
 export async function createCategory({ name, description }) {
   const SQL = `
   INSERT INTO categories
