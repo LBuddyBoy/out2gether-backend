@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import usersRouter from "#api/usersRouter";
 import postRouter from "#api/postRouter";
+import categoryRouter from "#api/categoryRouter";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json({ limit: "5mb" }));
 app.use(morgan("dev"));
 
 app.use("/users", usersRouter);
+app.use("/categories", categoryRouter);
 app.use("/posts", postRouter);
 
 app.get("/", (req, res) => {

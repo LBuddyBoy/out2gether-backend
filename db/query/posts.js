@@ -47,6 +47,9 @@ export async function createPost({
 
 /**
  * Gets all posts
+ * 
+ * @param {number} page the page currently on
+ * @param {number} limit the limit to retrieve
  *
  * @returns {Promise<Object[]>} the posts found
  */

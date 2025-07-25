@@ -3,7 +3,7 @@ import { base, de, de_CH, en, Faker } from "@faker-js/faker";
 import { createUser } from "#db/query/users";
 import { createPost } from "#db/query/posts";
 import { createPostLocation } from "#db/query/post_locations";
-import { createCategory } from "./query/categories";
+import { createCategory, getCategories } from "#db/query/categories";
 
 const customLocale = {
   title: "My custom locale",
@@ -22,6 +22,31 @@ await db.end();
 console.log("🌱 Database seeded.");
 
 async function seed() {
+  await seedUsers();
+  await seedCategories();
+  await seedPosts();
+  await printStats();
+}
+
+async function seedUsers() {
+  const users = [
+    {
+      username: "Admin",
+      email: "admin123@gmail.com",
+      password: "password123",
+      geolocation_latitude: 29.88195,
+      geolocation_longitude: -90.02341,
+    },
+  ];
+
+  for (const index in users) {
+    const user = users[index];
+
+    await createUser(user);
+  }
+}
+
+async function seedCategories() {
   const categories = [
     {
       name: "Date Night",
@@ -34,32 +59,20 @@ async function seed() {
     },
   ];
 
-  const accounts = [
-    {
-      username: "Admin",
-      email: "admin123@gmail.com",
-      password: "password123",
-      geolocation_latitude: 29.88195,
-      geolocation_longitude: -90.02341,
-    },
-  ];
-
-  for (const index in accounts) {
-    const account = accounts[index];
-
-    await createUser(account);
-  }
-
   for (const index in categories) {
     const category = categories[index];
 
     await createCategory(category);
   }
+}
 
-  for (let index = 0; index < 10; index++) {
+async function seedPosts() {
+  const categories = await getCategories();
+
+  for (let index = 0; index < 100; index++) {
     const post = {
       user_id: 1,
-      category_id: 1,
+      category_id: getRandomInt(1, categories.length),
       title: customFaker.commerce.productName(),
       body: customFaker.commerce.productDescription(),
       price: customFaker.number.float({ min: 10, max: 100, fractionDigits: 2 }),
@@ -77,6 +90,22 @@ async function seed() {
 
     await createPostLocation({ post_id: created.id, ...post });
   }
+}
+
+async function printStats() {
+  const {
+    rows: [users],
+  } = await db.query("SELECT COUNT(*) FROM users");
+  const {
+    rows: [categories],
+  } = await db.query("SELECT COUNT(*) FROM categories");
+  const {
+    rows: [posts],
+  } = await db.query("SELECT COUNT(*) FROM posts");
+
+  console.log("Seeded Users: ", users);
+  console.log("Seeded Categories: ", categories);
+  console.log("Seeded Posts: ", posts);
 }
 
 function getRandomInt(min, max) {

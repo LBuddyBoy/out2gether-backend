@@ -4,22 +4,6 @@ import requireBody from "#middleware/requireBody";
 import { createJWT, validateJWT } from "#util/jwt";
 const router = express.Router();
 
-/**
- *
- * Creates a user based on the provided body
- *
- * Response Body
- *
- * {
- *  id
- *  username
- *  email
- *  password
- *  geolocation_latitude
- *  geolocation_longitude
- * }
- *
- */
 router.post(
   "/register",
   requireBody([
@@ -36,25 +20,6 @@ router.post(
   }
 );
 
-/**
- *
- * Creates a jwt token for the user logging in
- *
- * Response Body
- *
- * {
- *  jwt
- *  user {
- *    id
- *    username
- *    email
- *    password
- *    geolocation_latitude
- *    geolocation_longitude
- *  }
- * }
- *
- */
 router.post("/login", requireBody(["email", "password"]), async (req, res) => {
   const user = await validateAccount(req.body);
 

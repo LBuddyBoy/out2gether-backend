@@ -18,8 +18,8 @@ export async function createUser({
   username,
   email,
   password,
-  geolocation_longitude,
-  geolocation_latitude,
+  geolocation_longitude = null,
+  geolocation_latitude = null,
   is_admin = false,
 }) {
   const SQL = `
