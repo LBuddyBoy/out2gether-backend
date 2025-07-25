@@ -1,0 +1,88 @@
+import { createUser, getUserById, validateAccount } from "#db/query/users";
+import express from "express";
+import requireBody from "#middleware/requireBody";
+import { createJWT, validateJWT } from "#util/jwt";
+const router = express.Router();
+
+/**
+ * 
+ * Creates a user based on the provided body
+ * 
+ * Response Body
+ * 
+ * {
+ *  id
+ *  username
+ *  email
+ *  password
+ *  geolocation_latitude
+ *  geolocation_longitude
+ * }
+ * 
+ */
+router.post(
+  "/register",
+  requireBody([
+    "username",
+    "email",
+    "password",
+    "geolocation_latitude",
+    "geolocation_longitude",
+  ]),
+  async (req, res) => {
+    res.status(201).json(await createUser(req.body));
+  }
+);
+
+/**
+ * 
+ * Creates a jwt token for the user logging in
+ * 
+ * Response Body
+ * 
+ * {
+ *  jwt
+ *  user {
+ *    id
+ *    username
+ *    email
+ *    password
+ *    geolocation_latitude
+ *    geolocation_longitude
+ *  }
+ * }
+ * 
+ */
+router.post("/login", requireBody(["email", "password"]), async (req, res) => {
+  const user = await validateAccount(req.body);
+
+  if (!user) {
+    return res.status(404).send("Invalid credentials.");
+  }
+
+  const jwt = createJWT(user.id);
+
+  res.status(200).json({
+    jwt,
+    user,
+  });
+});
+
+router.post("/me", requireBody(["jwt"]), async (req, res) => {
+  const { jwt } = req.body;
+  const { id } = validateJWT(jwt);
+
+  if (!id) {
+    return res.status(400).send("That jwt is expired or is invalid.");
+  }
+
+  const user = await getUserById(id);
+
+  if (!user) {
+    return res.status(404).send("A user with that id could not be found.");
+  }
+
+  res.status(200).json(user);
+});
+
+export default router;

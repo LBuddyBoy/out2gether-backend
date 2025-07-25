@@ -1,11 +1,11 @@
 {
-  "name": "project",
+  "name": "out2gether-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node --env-file=.env server.js",
     "dev": "node --watch --env-file=.env server.js",
-    "db:schema": "psql -d fullstack_employees -f ./db/schema.sql",
+    "db:schema": "psql -d outtogether -f ./db/schema.sql",
     "db:seed": "node --env-file=.env db/seed.js",
     "db:reset": "npm run db:schema && npm run db:seed"
   },
