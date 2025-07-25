@@ -3,6 +3,7 @@ import {
   deletePostById,
   getPostById,
   getPosts,
+  getPostsNear,
   updatePost,
 } from "#db/query/posts";
 import express from "express";
@@ -17,6 +18,13 @@ const router = express.Router();
 router.get("/:page/:limit", async (req, res) => {
   const { page, limit } = req.params;
   const posts = await getPosts(page, limit);
+
+  res.status(200).json(posts);
+});
+
+router.get("/:page/:limit/:miles", async (req, res) => {
+  const { page, limit, miles } = req.params;
+  const posts = await getPostsNear(22.467000, 138.547300, miles);
 
   res.status(200).json(posts);
 });

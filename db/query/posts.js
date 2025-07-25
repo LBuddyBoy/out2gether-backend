@@ -47,7 +47,7 @@ export async function createPost({
 
 /**
  * Gets all posts
- * 
+ *
  * @param {number} page the page currently on
  * @param {number} limit the limit to retrieve
  *
@@ -96,7 +96,7 @@ export async function getPostById(id) {
  *
  * @param {number} id
  * @param {Object} fields
- * 
+ *
  * @returns {Promise<Object>} the updated post
  */
 export async function updatePost(id, fields) {
@@ -122,9 +122,9 @@ export async function updatePost(id, fields) {
 
 /**
  * Deletes a post by the id
- * 
- * @param {number} id 
- * 
+ *
+ * @param {number} id
+ *
  * @returns {Promise<Object|undefined>} returns an object if it's deleted undefined if there was an error.
  */
 export async function deletePostById(id) {
@@ -139,4 +139,28 @@ export async function deletePostById(id) {
   } = await db.query(SQL, [id]);
 
   return post;
+}
+
+export async function getPostsNear(
+  geolocation_latitude,
+  geolocation_longitude,
+  miles
+) {
+  const meters = miles * 1609.34;
+  const SQL = `
+  SELECT posts.*, row_to_json(post_locations) AS location
+  FROM posts
+  JOIN (
+    SELECT pl.*, earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) AS distance
+    FROM post_locations pl
+  ) post_locations ON post_locations.post_id = posts.id AND post_locations.distance < $3
+  `;
+
+  const { rows } = await db.query(SQL, [
+    geolocation_latitude,
+    geolocation_longitude,
+    meters
+  ]);
+
+  return rows;
 }
