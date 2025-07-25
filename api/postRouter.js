@@ -14,47 +14,48 @@ import {
 
 const router = express.Router();
 
-router
-  .route("/")
-  .get(async (req, res) => {
-    const posts = await getPosts();
+router.get("/:page/:limit", async (req, res) => {
+  const { page, limit } = req.params;
+  const posts = await getPosts(page, limit);
 
-    res.status(200).json(posts);
-  })
-  .post(
-    requireBody([
-      "user_id",
-      "title",
-      "body",
-      "price",
-      "date",
-      "address",
-      "country",
-      "state",
-      "city",
-      "zip_code",
-      "geolocation_longitude",
-      "geolocation_latitude",
-    ]),
-    async (req, res) => {
-      const post = await createPost(req.body);
+  res.status(200).json(posts);
+});
 
-      if (!post) {
-        return;
-      }
+router.post(
+  "/",
+  requireBody([
+    "user_id",
+    "title",
+    "body",
+    "price",
+    "date",
+    "address",
+    "country",
+    "state",
+    "city",
+    "zip_code",
+    "geolocation_longitude",
+    "geolocation_latitude",
+  ]),
+  async (req, res) => {
+    const post = await createPost(req.body);
 
-      const post_location = await createPostLocation({
-        post_id: post.id,
-        ...req.body,
-      });
-
-      if (!post_location) {
-        return;
-      }
-
-      res.status(201).json("Post created!");
+    if (!post) {
+      return;
     }
-  );
+
+    const post_location = await createPostLocation({
+      post_id: post.id,
+      ...req.body,
+    });
+
+    if (!post_location) {
+      return;
+    }
+
+    res.status(201).json("Post created!");
+  }
+);
 
 router.param("id", async (req, res, next, id) => {
   const post = await getPostById(id);

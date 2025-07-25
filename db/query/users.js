@@ -4,7 +4,7 @@ export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
 
 /**
  * Creates a new user
- * 
+ *
  * @param {Object} params
  * @param {string} params.username
  * @param {string} params.email
@@ -20,10 +20,11 @@ export async function createUser({
   password,
   geolocation_longitude,
   geolocation_latitude,
+  is_admin = false,
 }) {
   const SQL = `
-    INSERT INTO users(username, email, password, geolocation_longitude, geolocation_latitude)
-    VALUES($1, $2, crypt($3, gen_salt('bf')), $4, $5)
+    INSERT INTO users(username, email, password, geolocation_longitude, geolocation_latitude, is_admin)
+    VALUES($1, $2, crypt($3, gen_salt('bf')), $4, $5, $6)
     RETURNING ${PUBLIC_USER_RETURNS}
     `;
 
@@ -35,6 +36,7 @@ export async function createUser({
     password,
     geolocation_longitude,
     geolocation_latitude,
+    is_admin,
   ]);
 
   return user;
@@ -42,9 +44,9 @@ export async function createUser({
 
 /**
  * Finds a user based on their id
- * 
+ *
  * @param {any} id the id of the user to query
- * 
+ *
  * @returns {Promise<Object>} The found user object (public fields only).
  */
 export async function getUserById(id) {
@@ -63,11 +65,11 @@ export async function getUserById(id) {
 
 /**
  * Validates an account based on the email and password
- * 
+ *
  * @param {Object} params
  * @param {string} params.email the email of the user
  * @param {string} params.password the plain password of the user
- * 
+ *
  * @returns {Promise<Object>} The found user object.
  */
 export async function validateAccount({ email, password }) {

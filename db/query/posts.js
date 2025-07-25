@@ -50,13 +50,16 @@ export async function createPost({
  *
  * @returns {Promise<Object[]>} the posts found
  */
-export async function getPosts() {
-  // TODO: Add pagination
+export async function getPosts(page, limit) {
+  const offset = (page - 1) * limit;
 
   const SQL = `
     SELECT posts.*, row_to_json(post_locations) AS location
     FROM posts
     JOIN post_locations ON post_locations.post_id = posts.id
+    ORDER BY (posts.id, posts.created_at) DESC
+    OFFSET ${offset}
+    LIMIT ${limit}
     `;
 
   const { rows } = await db.query(SQL);
