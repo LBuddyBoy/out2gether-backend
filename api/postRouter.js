@@ -22,12 +22,23 @@ router.get("/:page/:limit", async (req, res) => {
   res.status(200).json(posts);
 });
 
-router.get("/:page/:limit/:miles", async (req, res) => {
-  const { page, limit, miles } = req.params;
-  const posts = await getPostsNear(22.467000, 138.547300, miles);
+router.get(
+  "/:page/:limit/:miles",
+  requireBody(["geolocation_latitude", "geolocation_longitude"]),
+  async (req, res) => {
+    const { page, limit, miles } = req.params;
+    const { geolocation_latitude, geolocation_longitude } = req.body;
+    const posts = await getPostsNear({
+      geolocation_latitude,
+      geolocation_longitude,
+      miles,
+      page,
+      limit,
+    });
 
-  res.status(200).json(posts);
-});
+    res.status(200).json(posts);
+  }
+);
 
 router.post(
   "/",

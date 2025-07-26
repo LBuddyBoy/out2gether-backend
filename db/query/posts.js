@@ -103,6 +103,11 @@ export async function updatePost(id, fields) {
   const updates = Object.entries(fields).filter(
     ([k, v]) => k != null && v != null && allowedFields.includes(k)
   );
+
+  if (updates.length === 0) {
+    throw new Error("There were no valid fields to update.");
+  }
+
   const sets = updates.map(([key], index) => `${key} = $${index + 2}`);
   const values = updates.map(([_, value]) => value);
 
@@ -141,25 +146,44 @@ export async function deletePostById(id) {
   return post;
 }
 
-export async function getPostsNear(
+/**
+ * Gets all posts within a certain radius of the origin
+ *
+ * @param {Object} params
+ * @param {number} params.geolocation_latitude
+ * @param {number} params.geolocation_longitude
+ * @param {number} params.miles
+ * @param {number} params.page
+ * @param {number} params.limit
+ * @returns an array of posts with their distance from the origin
+ */
+export async function getPostsNear({
   geolocation_latitude,
   geolocation_longitude,
-  miles
-) {
+  miles,
+  page,
+  limit,
+}) {
+  const offset = (page - 1) * limit;
   const meters = miles * 1609.34;
   const SQL = `
   SELECT posts.*, row_to_json(post_locations) AS location
   FROM posts
   JOIN (
-    SELECT pl.*, earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) AS distance
+    SELECT pl.*, earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) AS distance_meters
     FROM post_locations pl
-  ) post_locations ON post_locations.post_id = posts.id AND post_locations.distance < $3
+  ) post_locations ON post_locations.post_id = posts.id AND post_locations.distance_meters < $3
+  ORDER BY post_locations.distance_meters ASC
+  OFFSET $4
+  LIMIT $5
   `;
 
   const { rows } = await db.query(SQL, [
     geolocation_latitude,
     geolocation_longitude,
-    meters
+    meters,
+    offset,
+    limit,
   ]);
 
   return rows;

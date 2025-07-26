@@ -24,7 +24,7 @@ router.param("id", async (req, res, next, id) => {
 
 router.get("/:id/posts/:page/:limit", async (req, res) => {
   const { page, limit } = req.params;
-  const posts = await getCategoryPosts(req.category.id, page, limit);
+  const posts = await getCategoryPosts({ id: req.category.id, page, limit });
 
   res.status(200).json(posts);
 });

@@ -65,13 +65,18 @@ export async function createPostLocation({
  *
  * @param {number} id
  * @param {Object} fields
- * 
+ *
  * @returns {Promise<Object>} the updated post location
  */
 export async function updatePostLocation(id, fields) {
   const updates = Object.entries(fields).filter(
     ([k, v]) => k && v && allowedFields.includes(k)
   );
+
+  if (updates.length === 0) {
+    throw new Error("There were no valid fields to update.");
+  }
+
   const sets = updates.map(([k, v], index) => `${k} = $${index + 2}`);
   const values = updates.map(([_, v]) => v);
 

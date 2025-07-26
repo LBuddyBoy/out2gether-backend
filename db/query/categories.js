@@ -25,6 +25,11 @@ export async function createCategory({ name, description }) {
   return category;
 }
 
+/**
+ * Gets all categories
+ * 
+ * @returns an array of categories
+ */
 export async function getCategories() {
   const SQL = `
   SELECT * FROM categories
@@ -35,6 +40,12 @@ export async function getCategories() {
   return rows;
 }
 
+/**
+ * Gets a category by the id
+ * 
+ * @param {number} id 
+ * @returns the category found
+ */
 export async function getCategoryById(id) {
   const SQL = `
   SELECT *
@@ -49,7 +60,16 @@ export async function getCategoryById(id) {
   return category;
 }
 
-export async function getCategoryPosts(id, page, limit) {
+/**
+ * Gets all posts from a category with pagination
+ * 
+ * @param {Object} params
+ * @param {number} params.id 
+ * @param {number} params.page 
+ * @param {number} params.limit 
+ * @returns an array of posts found
+ */
+export async function getCategoryPosts({id, page, limit}) {
   const offset = (page - 1) * limit;
   const SQL = `
   SELECT posts.*, row_to_json(post_locations) AS location

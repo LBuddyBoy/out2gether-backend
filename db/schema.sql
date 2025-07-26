@@ -44,7 +44,12 @@ CREATE TABLE post_locations(
     zip_code varchar(20) NOT NULL,
     geolocation_latitude double precision NOT NULL,
     geolocation_longitude double precision NOT NULL
+);
 
+CREATE TABLE cart_items(
+    post_id int PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,
+    owner_id int REFERENCES users(id) ON DELETE CASCADE,
+    quantity int NOT NULL DEFAULT 1
 );
 
 -- earth_distance(ll_to_earth(102.039900, 18.672900), ll_to_earth(-140.367800, -56.644500));
