@@ -9,7 +9,7 @@ import getUserFromToken from "#middleware/getUserFromToken";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: /localhost:\d+$/ }));
 app.use(express.json({ limit: "5mb" }));
 app.use(morgan("dev"));
 
@@ -21,7 +21,7 @@ app.use("/categories", categoryRouter);
 app.use("/posts", postRouter);
 
 app.get("/", (req, res) => {
-    res.send("Out2Gether Online ✅");
+  res.send("Out2Gether Online ✅");
 });
 
 app.use((err, req, res, next) => {
@@ -37,6 +37,5 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send("Sorry! Something went wrong.");
 });
-
 
 export default app;
