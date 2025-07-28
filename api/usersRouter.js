@@ -6,17 +6,11 @@ const router = express.Router();
 
 router.post(
   "/register",
-  requireBody([
-    "username",
-    "email",
-    "password",
-    "geolocation_latitude",
-    "geolocation_longitude",
-  ]),
+  requireBody(["username", "email", "password"]),
   async (req, res) => {
     const user = await createUser(req.body);
     if (!user) return;
-    res.status(201).json();
+    res.status(201).send("User created!");
   }
 );
 

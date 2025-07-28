@@ -16,7 +16,7 @@ router.param("id", async (req, res, next, id) => {
   const category = await getCategoryById(id);
 
   if (!category)
-    return res.status(404).json("A category with that id could not be found.");
+    return res.status(404).send("A category with that id could not be found.");
 
   req.category = category;
   next();
