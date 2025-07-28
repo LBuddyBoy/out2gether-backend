@@ -1,9 +1,10 @@
 import db from "#db/client";
 import { base, de, de_CH, en, Faker } from "@faker-js/faker";
 import { createUser } from "#db/query/users";
-import { createPost } from "#db/query/posts";
+import { createPost, getPosts } from "#db/query/posts";
 import { createPostLocation } from "#db/query/post_locations";
 import { createCategory, getCategories } from "#db/query/categories";
+import { createCartItem } from "#db/query/cart_items";
 
 const customLocale = {
   title: "My custom locale",
@@ -25,6 +26,7 @@ async function seed() {
   await seedUsers();
   await seedCategories();
   await seedPosts();
+  await seedCart();
   await printStats();
 }
 
@@ -36,6 +38,15 @@ async function seedUsers() {
       password: "password123",
       geolocation_latitude: 29.88195,
       geolocation_longitude: -90.02341,
+      is_admin: true
+    },
+    {
+      username: "User",
+      email: "user123@gmail.com",
+      password: "password123",
+      geolocation_latitude: 29.88195,
+      geolocation_longitude: -90.02341,
+      is_admin: false
     },
   ];
 
@@ -92,6 +103,24 @@ async function seedPosts() {
   }
 }
 
+async function seedCart() {
+  const { rows: posts } = await db.query("SELECT * FROM posts");
+  const { rows: users } = await db.query("SELECT * FROM users");
+
+  for (let index = 0; index < 100; index++) {
+    const post = posts[getRandomInt(1, posts.length) - 1];
+    const user = users[getRandomInt(1, users.length) - 1];
+
+    try {
+      await createCartItem({
+        post_id: post.id,
+        owner_id: user.id,
+        quantity: getRandomInt(1, 5),
+      });
+    } catch (ignored) {}
+  }
+}
+
 async function printStats() {
   const {
     rows: [users],
@@ -102,10 +131,14 @@ async function printStats() {
   const {
     rows: [posts],
   } = await db.query("SELECT COUNT(*) FROM posts");
+  const {
+    rows: [cart_items],
+  } = await db.query("SELECT COUNT(*) FROM cart_items");
 
   console.log("Seeded Users: ", users);
   console.log("Seeded Categories: ", categories);
   console.log("Seeded Posts: ", posts);
+  console.log("Seeded Cart Items: ", cart_items);
 }
 
 function getRandomInt(min, max) {
