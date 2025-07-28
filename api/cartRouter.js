@@ -5,8 +5,6 @@ import {
   getCartItems,
   updateCartItem,
 } from "#db/query/cart_items";
-import { getPostById } from "#db/query/posts";
-import { getUserById } from "#db/query/users";
 import requireBody from "#middleware/requireBody";
 import requireUser from "#middleware/requireUser";
 import express from "express";
