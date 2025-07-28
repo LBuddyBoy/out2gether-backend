@@ -4,6 +4,8 @@ import morgan from "morgan";
 import usersRouter from "#api/usersRouter";
 import postRouter from "#api/postRouter";
 import categoryRouter from "#api/categoryRouter";
+import cartRouter from "#api/cartRouter";
+import getUserFromToken from "#middleware/getUserFromToken";
 
 const app = express();
 
@@ -11,7 +13,10 @@ app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 app.use(morgan("dev"));
 
+app.use(getUserFromToken);
+
 app.use("/users", usersRouter);
+app.use("/cart", cartRouter);
 app.use("/categories", categoryRouter);
 app.use("/posts", postRouter);
 

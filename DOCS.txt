@@ -2,5 +2,5 @@ Geolocation:
 - https://www.thenile.dev/docs/extensions/earthdistance
   > I initially tried to use PostGIS, but it was a little more complicated and we didn't need something that advanced yet
   > This laid the foundation for most of the filtering and Place of Interests
-- https://www.postgresql.org/docs/current/earthdistance.html - more information on the functions to use
+- https://www.postgresql.org/docs/current/earthdistance.html - used to find more information on the distance from a ll (latitude & longitude) to another ll
 - https://www.maps.ie/coordinates.html - used to verify my results
