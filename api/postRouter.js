@@ -80,7 +80,7 @@ router.param("id", async (req, res, next, id) => {
   const post = await getPostById(id);
 
   if (!post)
-    return res.status(404).json("A post with that id couldn't be found.");
+    return res.status(404).send("A post with that id couldn't be found.");
 
   req.post = post;
   next();
@@ -100,7 +100,7 @@ router
     const post = await deletePostById(req.post.id);
 
     if (post) {
-      res.status(204);
+      res.status(204).send("Post deleted.");
     }
   });
 

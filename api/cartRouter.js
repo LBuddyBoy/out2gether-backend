@@ -33,7 +33,7 @@ router.param("postId", async (req, res, next, postId) => {
   const cart_item = await getCartItem(req.user.id, postId);
 
   if (!cart_item)
-    return res.status(404).json("Couldn't find a cart item with that post id.");
+    return res.status(404).send("Couldn't find a cart item with that post id.");
 
   req.cart_item = cart_item;
   next();
@@ -55,7 +55,7 @@ router
   })
   .delete(async (req, res) => {
     await deleteCartItem(req.cart_item.owner_id, req.cart_item.post_id);
-    res.status(204).json("Successfully deleted!");
+    res.status(204).send("Successfully deleted!");
   });
 
 export default router;
