@@ -14,20 +14,25 @@ router.post(
   }
 );
 
-router.post("/login", requireBody(["email", "password"]), async (req, res) => {
-  const user = await validateAccount(req.body);
+router.post(
+  "/login",
+  requireBody(["email", "password"]),
+  async (req, res, next) => {
+    try {
+      const user = await validateAccount(req.body);
 
-  if (!user) {
-    return res.status(404).send("Invalid credentials.");
+      if (!user) {
+        return res.status(401).send("Invalid credentials.");
+      }
+
+      const jwt = createJWT(user.id);
+
+      res.status(200).json({ jwt, user });
+    } catch (error) {
+      next(error);
+    }
   }
-
-  const jwt = createJWT(user.id);
-
-  res.status(200).json({
-    jwt,
-    user,
-  });
-});
+);
 
 router.post("/me", requireBody(["jwt"]), async (req, res) => {
   const { jwt } = req.body;
