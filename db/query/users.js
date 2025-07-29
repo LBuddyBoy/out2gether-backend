@@ -1,5 +1,13 @@
 import db from "#db/client";
 
+const allowedFields = [
+  "username",
+  "email",
+  "password",
+  "geolocation_longitude",
+  "geolocation_latitude",
+  "is_admin",
+];
 export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
 
 /**
@@ -82,6 +90,32 @@ export async function validateAccount({ email, password }) {
   const {
     rows: [user],
   } = await db.query(SQL, [email, password]);
+
+  return user;
+}
+
+export async function updateUser(id, fields) {
+  const updates = Object.entries(fields).filter(
+    ([k, v]) => k != null && v != null && allowedFields.includes(k)
+  );
+
+  if (updates.length === 0) {
+    throw new Error("There were no valid fields to update.");
+  }
+
+  const sets = updates.map(([k, _], index) => `SET ${k} = $${index + 2}`);
+  const values = updates.map(([_, v]) => v);
+
+  const SQL = `
+  UPDATE users
+  SET ${sets}
+  WHERE id = $1
+  RETURNING *
+  `;
+
+  const {
+    rows: [user],
+  } = await db.query(SQL, [id, ...values]);
 
   return user;
 }
