@@ -12,8 +12,35 @@ import {
   createPostLocation,
   updatePostLocation,
 } from "#db/query/post_locations";
+import requireUser from "#middleware/requireUser";
+import {
+  createFavoritePost,
+  deleteFavoritePost,
+  getFavoritePosts,
+} from "#db/query/favorite_posts";
 
 const router = express.Router();
+
+router
+  .route("/favorites")
+  .post(requireUser, requireBody(["post_id"]), async (req, res) => {
+    const favorite = await createFavoritePost({
+      user_id: req.user.id,
+      ...req.body,
+    });
+
+    res.status(201).json(favorite);
+  })
+  .get(requireUser, async (req, res) => {
+    const favorites = await getFavoritePosts(req.user.id);
+
+    res.status(200).json(favorites);
+  })
+  .delete(requireUser, requireBody(["post_id"]), async (req, res) => {
+    const deleted = await deleteFavoritePost(req.user.id, req.body.post_id);
+
+    res.status(204).json(deleted);
+  });
 
 router.get("/:page/:limit", async (req, res) => {
   const { page, limit } = req.params;
@@ -91,7 +118,7 @@ router
   .get(async (req, res) => {
     res.status(200).json(req.post);
   })
-  .put(requireBody([]), async (req, res) => {
+  .put(async (req, res) => {
     const update = await updatePost(req.post.id, req.body);
 
     res.status(200).json(update);

@@ -5,6 +5,7 @@ import { createPost, getPosts } from "#db/query/posts";
 import { createPostLocation } from "#db/query/post_locations";
 import { createCategory, getCategories } from "#db/query/categories";
 import { createCartItem } from "#db/query/cart_items";
+import { createFavoritePost } from "#db/query/favorite_posts";
 
 const customLocale = {
   title: "My custom locale",
@@ -27,6 +28,7 @@ async function seed() {
   await seedCategories();
   await seedPosts();
   await seedCart();
+  await seedFavorites();
   await printStats();
 }
 
@@ -38,7 +40,7 @@ async function seedUsers() {
       password: "password123",
       geolocation_latitude: 29.88195,
       geolocation_longitude: -90.02341,
-      is_admin: true
+      is_admin: true,
     },
     {
       username: "User",
@@ -46,7 +48,7 @@ async function seedUsers() {
       password: "password123",
       geolocation_latitude: 29.88195,
       geolocation_longitude: -90.02341,
-      is_admin: false
+      is_admin: false,
     },
   ];
 
@@ -121,6 +123,23 @@ async function seedCart() {
   }
 }
 
+async function seedFavorites() {
+  const { rows: posts } = await db.query("SELECT * FROM posts");
+  const { rows: users } = await db.query("SELECT * FROM users");
+
+  for (let index = 0; index < 20; index++) {
+    const post = posts[getRandomInt(1, posts.length) - 1];
+    const user = users[getRandomInt(1, users.length) - 1];
+
+    try {
+      await createFavoritePost({
+        post_id: post.id,
+        user_id: user.id,
+      });
+    } catch (ignored) {}
+  }
+}
+
 async function printStats() {
   const {
     rows: [users],
@@ -134,11 +153,15 @@ async function printStats() {
   const {
     rows: [cart_items],
   } = await db.query("SELECT COUNT(*) FROM cart_items");
+  const {
+    rows: [favorites],
+  } = await db.query("SELECT COUNT(*) FROM favorite_posts");
 
   console.log("Seeded Users: ", users);
   console.log("Seeded Categories: ", categories);
   console.log("Seeded Posts: ", posts);
   console.log("Seeded Cart Items: ", cart_items);
+  console.log("Seeded Favorites: ", favorites);
 }
 
 function getRandomInt(min, max) {
