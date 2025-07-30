@@ -13,10 +13,17 @@ const router = express.Router();
 router.post(
   "/register",
   requireBody(["username", "email", "password"]),
-  async (req, res) => {
-    const user = await createUser(req.body);
-    if (!user) return;
-    res.status(201).send("User created!");
+  async (req, res, next) => {
+    try {
+      const user = await createUser(req.body);
+      if (!user) {
+        return res.status(400).send("Could not create user.");
+      }
+      const jwt = createJWT(user.id);
+      res.status(201).json({ jwt, user });
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
