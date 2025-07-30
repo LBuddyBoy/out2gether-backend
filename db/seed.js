@@ -1,6 +1,6 @@
 import db from "#db/client";
 import { base, de, de_CH, en, Faker } from "@faker-js/faker";
-import { createUser } from "#db/query/users";
+import { createUser, getUsers } from "#db/query/users";
 import { createPost, getPosts } from "#db/query/posts";
 import { createPostLocation } from "#db/query/post_locations";
 import { createCategory, getCategories } from "#db/query/categories";
@@ -81,6 +81,7 @@ async function seedCategories() {
 
 async function seedPosts() {
   const categories = await getCategories();
+  const users = await getUsers();
 
   for (let index = 0; index < 100; index++) {
     const post = {
@@ -97,6 +98,7 @@ async function seedPosts() {
       zip_code: customFaker.location.zipCode("#####"),
       geolocation_latitude: customFaker.location.latitude(),
       geolocation_longitude: customFaker.location.longitude(),
+      image_url: customFaker.image.urlPicsumPhotos({ width: 640, height: 480 }),
     };
 
     const created = await createPost(post);
