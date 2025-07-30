@@ -34,7 +34,8 @@ CREATE TABLE posts(
     title text NOT NULL,
     body text NOT NULL,
     price decimal(10, 2) NOT NULL,
-    date date NOT NULL
+    date date NOT NULL,
+    image_url text NOT NULL DEFAULT 'https://via.placeholder.com/300'
 );
 
 CREATE TABLE post_locations(
