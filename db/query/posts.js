@@ -7,6 +7,7 @@ const allowedFields = [
   "body",
   "price",
   "date",
+  "image_url",
 ];
 
 /**
@@ -29,18 +30,27 @@ export async function createPost({
   body,
   price,
   date,
+  image_url,
 }) {
   const SQL = `
     INSERT INTO posts
-      (user_id, category_id, title, body, price, date)
+      (user_id, category_id, title, body, price, date, image_url)
     VALUES
-      ($1, $2, $3, $4, $5, $6)
+      ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     `;
 
   const {
     rows: [post],
-  } = await db.query(SQL, [user_id, category_id, title, body, price, date]);
+  } = await db.query(SQL, [
+    user_id,
+    category_id,
+    title,
+    body,
+    price,
+    date,
+    image_url,
+  ]);
 
   return post;
 }
