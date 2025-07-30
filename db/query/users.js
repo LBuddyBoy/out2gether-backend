@@ -51,6 +51,20 @@ export async function createUser({
 }
 
 /**
+ * Gets all users
+ *
+ * @returns {Promise<Object[]>} All users in the database
+ */
+export async function getUsers() {
+  const SQL = `
+    SELECT *
+    FROM users;
+    `;
+  const { rows } = await db.query(SQL);
+  return rows;
+}
+
+/**
  * Finds a user based on their id
  *
  * @param {any} id the id of the user to query
