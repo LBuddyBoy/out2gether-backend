@@ -7,6 +7,7 @@ const allowedFields = [
   "body",
   "price",
   "date",
+  "time",
   "image_url",
 ];
 
@@ -30,13 +31,14 @@ export async function createPost({
   body,
   price,
   date,
+  time,
   image_url,
 }) {
   const SQL = `
     INSERT INTO posts
-      (user_id, category_id, title, body, price, date, image_url)
+      (user_id, category_id, title, body, price, date, time, image_url)
     VALUES
-      ($1, $2, $3, $4, $5, $6, $7)
+      ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
     `;
 
@@ -49,6 +51,7 @@ export async function createPost({
     body,
     price,
     date,
+    time,
     image_url,
   ]);
 
@@ -71,11 +74,38 @@ export async function getPosts(page, limit) {
     FROM posts
     JOIN post_locations ON post_locations.post_id = posts.id
     ORDER BY (posts.id, posts.created_at) DESC
-    OFFSET ${offset}
-    LIMIT ${limit}
+    OFFSET $1
+    LIMIT $2
     `;
 
-  const { rows } = await db.query(SQL);
+  const { rows } = await db.query(SQL, [offset, limit]);
+
+  return rows;
+}
+
+/**
+ * Gets all posts based on a query
+ *
+ * @param {number} query the keyword to search
+ * @param {number} page the page currently on
+ * @param {number} limit the limit to retrieve
+ *
+ * @returns {Promise<Object[]>} the posts found
+ */
+export async function searchPosts(query, page, limit) {
+  const offset = (page - 1) * limit;
+
+  const SQL = `
+    SELECT posts.*, row_to_json(post_locations) AS location
+    FROM posts
+    JOIN post_locations ON post_locations.post_id = posts.id
+    WHERE posts.title ILIKE $3 OR posts.body ILIKE $3
+    ORDER BY (posts.id, posts.created_at) DESC
+    OFFSET $1
+    LIMIT $2
+    `;
+
+  const { rows } = await db.query(SQL, [offset, limit, `%${query}%`]);
 
   return rows;
 }
@@ -195,6 +225,25 @@ export async function getPostsNear({
     offset,
     limit,
   ]);
+
+  return rows;
+}
+
+export async function getPostsByField(field, minimum, maximum, page, limit) {
+  if (!allowedFields.includes(field)) {
+    throw new Error("That field queried is not valid.");
+  }
+
+  const offset = (page - 1) * limit;
+  const SQL = `
+  SELECT * 
+  FROM posts
+  WHERE posts.${field} >= $1 AND posts.${field} <= $2
+  OFFSET $3
+  LIMIT $4
+  `;
+
+  const { rows } = await db.query(SQL, [minimum, maximum, offset, limit]);
 
   return rows;
 }

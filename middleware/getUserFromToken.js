@@ -15,6 +15,7 @@ export default async function getUserFromToken(req, res, next) {
     const user = await getUserById(id);
 
     if (user) req.user = user;
+    
   } catch (error) {
     console.log(error);
   }

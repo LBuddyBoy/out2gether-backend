@@ -3,7 +3,9 @@ import {
   deletePostById,
   getPostById,
   getPosts,
+  getPostsByField,
   getPostsNear,
+  searchPosts,
   updatePost,
 } from "#db/query/posts";
 import express from "express";
@@ -49,8 +51,28 @@ router.get("/:page/:limit", async (req, res) => {
   res.status(200).json(posts);
 });
 
+router.get("/search/:page/:limit/:query", async (req, res) => {
+  const { page, limit, query } = req.params;
+  const posts = await searchPosts(query, page, limit);
+
+  res.status(200).json(posts);
+});
+
 router.get(
-  "/:page/:limit/:miles",
+  "/filter/:filter/:page/:limit",
+  requireBody(["minimum", "maximum"]),
+  async (req, res) => {
+    const { filter, page, limit } = req.params;
+    const { minimum, maximum } = req.body;
+
+    res
+      .status(200)
+      .json(await getPostsByField(filter, minimum, maximum, page, limit));
+  }
+);
+
+router.get(
+  "/near/:page/:limit/:miles",
   requireBody(["geolocation_latitude", "geolocation_longitude"]),
   async (req, res) => {
     const { page, limit, miles } = req.params;
