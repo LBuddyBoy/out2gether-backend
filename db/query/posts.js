@@ -119,9 +119,10 @@ export async function searchPosts(query, page, limit) {
  */
 export async function getPostById(id) {
   const SQL = `
-  SELECT *
+  SELECT posts.*, row_to_json(post_locations) AS location
   FROM posts
-  WHERE id = $1
+  JOIN post_locations ON post_locations.post_id = $1
+  WHERE posts.id = $1
   `;
 
   const {
@@ -239,6 +240,7 @@ export async function getPostsByField(field, minimum, maximum, page, limit) {
   SELECT * 
   FROM posts
   WHERE posts.${field} >= $1 AND posts.${field} <= $2
+  ORDER BY posts.${field}
   OFFSET $3
   LIMIT $4
   `;
