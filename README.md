@@ -257,7 +257,7 @@ Authorization: Bearer <jwt-token>
 
 ### Get Posts Near Location
 
-**GET** `/posts/:page/:limit/:miles`
+**GET** `/posts/near/:page/:limit/:miles`
 
 Returns a paginated list of posts within a certain distance from a geographic point.
 
@@ -302,6 +302,44 @@ Content-Type: application/json
     // ...other fields
   }
   // ...more posts within 20 miles
+]
+```
+
+---
+
+### Search for a Post
+
+**GET** `/posts/search/:page/:limit/:query`
+
+Returns a paginated list of posts matches the query.
+
+#### URL Parameters
+
+- `page` (integer): Page number
+- `limit` (integer): Number of posts per page
+- `query` (string): The string to query
+
+#### Example Request
+
+```http
+GET /posts/1/10/test
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+```
+
+#### Example Response
+
+```json
+[
+  {
+    "id": 55,
+    "title": "Test Post",
+    "price": 120,
+    "geolocation_latitude": 29.95,
+    "geolocation_longitude": -90.07
+    // ...other fields
+  }
+  // ...more posts that match test
 ]
 ```
 

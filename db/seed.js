@@ -84,13 +84,15 @@ async function seedPosts() {
   const users = await getUsers();
 
   for (let index = 0; index < 100; index++) {
+    const date = customFaker.date.future({ years: 10 });
     const post = {
       user_id: 1,
       category_id: getRandomInt(1, categories.length),
       title: customFaker.commerce.productName(),
       body: customFaker.commerce.productDescription(),
       price: customFaker.number.float({ min: 10, max: 100, fractionDigits: 2 }),
-      date: customFaker.date.future({ years: 10 }),
+      date: date,
+      time: date.toTimeString().split(' ')[0],
       address: customFaker.location.streetAddress(),
       country: customFaker.location.country(),
       state: customFaker.location.state(),

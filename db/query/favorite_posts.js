@@ -30,9 +30,10 @@ export async function deleteFavoritePost(user_id, post_id) {
 
 export async function getFavoritePosts(user_id) {
   const SQL = `
-  SELECT fp.*, row_to_json(posts) AS post
+  SELECT fp.*, row_to_json(posts) AS post, json_build_object('id', users.id, 'username', users.username, 'avatar_url', users.avatar_url) AS user
   FROM favorite_posts fp
   JOIN posts ON posts.id = fp.post_id
+  JOIN users ON users.id = fp.user_id
   WHERE fp.user_id = $1
   `;
 
