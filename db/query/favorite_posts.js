@@ -14,6 +14,20 @@ export async function createFavoritePost({ user_id, post_id }) {
   return favorite;
 }
 
+export async function getFavoritePost(user_id, post_id) {
+  const SQL = `
+  SELECT *
+  FROM favorite_posts
+  WHERE user_id = $1 AND post_id = $2
+  `;
+
+  const {
+    rows: [favorite],
+  } = await db.query(SQL, [user_id, post_id]);
+
+  return favorite;
+}
+
 export async function deleteFavoritePost(user_id, post_id) {
   const SQL = `
   DELETE FROM favorite_posts

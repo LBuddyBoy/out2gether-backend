@@ -32,9 +32,6 @@ router
 router.param("postId", async (req, res, next, postId) => {
   const cart_item = await getCartItem(req.user.id, postId);
 
-  if (!cart_item)
-    return res.status(404).send("Couldn't find a cart item with that post id.");
-
   req.cart_item = cart_item;
   next();
 });
@@ -42,18 +39,32 @@ router.param("postId", async (req, res, next, postId) => {
 router
   .route("/:postId")
   .get(async (req, res) => {
-    res.status(200).json(req.cart_item);
+    res.status(200).json(req.cart_item || false);
   })
   .put(async (req, res) => {
+    if (!req.cart_item)
+      return res
+        .status(404)
+        .send("Couldn't find a cart item with that post id.");
+
     const update = await updateCartItem(
       req.cart_item.owner_id,
       req.cart_item.post_id,
       req.body
     );
 
+    if (update.quantity <= 0) {
+      await deleteCartItem(req.cart_item.owner_id, req.cart_item.post_id);
+    }
+
     res.status(200).json(update);
   })
   .delete(async (req, res) => {
+    if (!req.cart_item)
+      return res
+        .status(404)
+        .send("Couldn't find a cart item with that post id.");
+
     await deleteCartItem(req.cart_item.owner_id, req.cart_item.post_id);
     res.status(204).send("Successfully deleted!");
   });

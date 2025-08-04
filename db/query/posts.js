@@ -1,4 +1,5 @@
 import db from "#db/client";
+import { PUBLIC_USER_RETURNS } from "#db/query/users";
 
 const allowedFields = [
   "user_id",
@@ -119,9 +120,12 @@ export async function searchPosts(query, page, limit) {
  */
 export async function getPostById(id) {
   const SQL = `
-  SELECT posts.*, row_to_json(post_locations) AS location
+  SELECT posts.*, row_to_json(post_locations) AS location, row_to_json(users) AS user
   FROM posts
   JOIN post_locations ON post_locations.post_id = $1
+  JOIN (
+    SELECT ${PUBLIC_USER_RETURNS} FROM users
+  ) users ON users.id = posts.user_id
   WHERE posts.id = $1
   `;
 

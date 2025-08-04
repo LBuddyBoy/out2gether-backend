@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import usersRouter from "#api/usersRouter";
+import favoriteRouter from "#api/favoriteRouter";
 import postRouter from "#api/postRouter";
 import categoryRouter from "#api/categoryRouter";
 import cartRouter from "#api/cartRouter";
@@ -16,6 +17,7 @@ app.use(morgan("dev"));
 app.use(getUserFromToken);
 
 app.use("/users", usersRouter);
+app.use("/favorites", favoriteRouter);
 app.use("/cart", cartRouter);
 app.use("/categories", categoryRouter);
 app.use("/posts", postRouter);
@@ -27,7 +29,7 @@ app.get("/", (req, res) => {
 app.use((err, req, res, next) => {
   switch (err.code) {
     case "23505":
-      return res.status(400).send(err.detail);
+      return res.status(400).send(err.code);
     default:
       next(err);
   }
