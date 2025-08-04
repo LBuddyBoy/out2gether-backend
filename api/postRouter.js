@@ -14,35 +14,8 @@ import {
   createPostLocation,
   updatePostLocation,
 } from "#db/query/post_locations";
-import requireUser from "#middleware/requireUser";
-import {
-  createFavoritePost,
-  deleteFavoritePost,
-  getFavoritePosts,
-} from "#db/query/favorite_posts";
 
 const router = express.Router();
-
-router
-  .route("/favorites")
-  .post(requireUser, requireBody(["post_id"]), async (req, res) => {
-    const favorite = await createFavoritePost({
-      user_id: req.user.id,
-      ...req.body,
-    });
-
-    res.status(201).json(favorite);
-  })
-  .get(requireUser, async (req, res) => {
-    const favorites = await getFavoritePosts(req.user.id);
-
-    res.status(200).json(favorites);
-  })
-  .delete(requireUser, requireBody(["post_id"]), async (req, res) => {
-    const deleted = await deleteFavoritePost(req.user.id, req.body.post_id);
-
-    res.status(204).json(deleted);
-  });
 
 router.get("/:page/:limit", async (req, res) => {
   const { page, limit } = req.params;
@@ -59,15 +32,15 @@ router.get("/search/:page/:limit/:query", async (req, res) => {
 });
 
 router.get(
-  "/filter/:filter/:page/:limit",
+  "/filter/:field/:page/:limit",
   requireBody(["minimum", "maximum"]),
   async (req, res) => {
-    const { filter, page, limit } = req.params;
+    const { field, page, limit } = req.params;
     const { minimum, maximum } = req.body;
 
     res
       .status(200)
-      .json(await getPostsByField(filter, minimum, maximum, page, limit));
+      .json(await getPostsByField(field, minimum, maximum, page, limit));
   }
 );
 
@@ -140,7 +113,7 @@ router
   .get(async (req, res) => {
     res.status(200).json(req.post);
   })
-  .put(async (req, res) => {
+  .put(requireBody([]), async (req, res) => {
     const update = await updatePost(req.post.id, req.body);
 
     res.status(200).json(update);
