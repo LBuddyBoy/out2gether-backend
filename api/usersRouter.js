@@ -1,39 +1,52 @@
-import { createUser, getUserById, validateAccount } from "#db/query/users";
+import {
+  createUser,
+  getUserById,
+  updateUser,
+  validateAccount,
+} from "#db/query/users";
 import express from "express";
 import requireBody from "#middleware/requireBody";
 import { createJWT, validateJWT } from "#util/jwt";
+import requireUser from "#middleware/requireUser";
+import { getPostsByUserId } from "#db/query/posts";
 const router = express.Router();
 
 router.post(
   "/register",
-  requireBody([
-    "username",
-    "email",
-    "password",
-    "geolocation_latitude",
-    "geolocation_longitude",
-  ]),
-  async (req, res) => {
-    const user = await createUser(req.body);
-    if (!user) return;
-    res.status(201).json();
+  requireBody(["username", "email", "password"]),
+  async (req, res, next) => {
+    try {
+      const user = await createUser(req.body);
+      if (!user) {
+        return res.status(400).send("Could not create user.");
+      }
+      const jwt = createJWT(user.id);
+      res.status(201).json({ jwt, user });
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
-router.post("/login", requireBody(["email", "password"]), async (req, res) => {
-  const user = await validateAccount(req.body);
+router.post(
+  "/login",
+  requireBody(["email", "password"]),
+  async (req, res, next) => {
+    try {
+      const user = await validateAccount(req.body);
 
-  if (!user) {
-    return res.status(404).send("Invalid credentials.");
+      if (!user) {
+        return res.status(401).send("Invalid credentials.");
+      }
+
+      const jwt = createJWT(user.id);
+
+      res.status(200).json({ jwt, user });
+    } catch (error) {
+      next(error);
+    }
   }
-
-  const jwt = createJWT(user.id);
-
-  res.status(200).json({
-    jwt,
-    user,
-  });
-});
+);
 
 router.post("/me", requireBody(["jwt"]), async (req, res) => {
   const { jwt } = req.body;
@@ -50,6 +63,30 @@ router.post("/me", requireBody(["jwt"]), async (req, res) => {
   }
 
   res.status(200).json(user);
+});
+
+router.get("/posts/:page/:limit", requireUser, async (req, res) => {
+  const user = req.user;
+  const { page, limit } = req.params;
+  const posts = await getPostsByUserId(user.id, page, limit);
+
+  res.status(200).json(posts);
+});
+
+router.param("id", async (req, res, next, id) => {
+  const user = await getUserById(id);
+
+  if (!user)
+    return res.status(404).send("A user with that name could not be found.");
+
+  req.target = user;
+  next();
+});
+
+router.route("/:id").put(requireUser, async (req, res) => {
+  const update = await updateUser(req.target.id, req.body);
+
+  res.status(200).json(update);
 });
 
 export default router;

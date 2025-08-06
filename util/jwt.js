@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 export function createJWT(id) {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: 3600 });
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 
 export function validateJWT(token) {

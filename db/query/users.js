@@ -1,5 +1,14 @@
 import db from "#db/client";
 
+const allowedFields = [
+  "username",
+  "email",
+  "password",
+  "geolocation_longitude",
+  "geolocation_latitude",
+  "is_admin",
+];
+
 export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
 
 /**
@@ -43,6 +52,20 @@ export async function createUser({
 }
 
 /**
+ * Gets all users
+ *
+ * @returns {Promise<Object[]>} All users in the database
+ */
+export async function getUsers() {
+  const SQL = `
+    SELECT *
+    FROM users;
+    `;
+  const { rows } = await db.query(SQL);
+  return rows;
+}
+
+/**
  * Finds a user based on their id
  *
  * @param {any} id the id of the user to query
@@ -82,6 +105,40 @@ export async function validateAccount({ email, password }) {
   const {
     rows: [user],
   } = await db.query(SQL, [email, password]);
+
+  return user;
+}
+
+/**
+ * Updates a user based on the fields
+ *
+ * @param {number} id
+ * @param {Object} fields
+ *
+ * @returns {Promise<Object>} the updated user
+ */
+export async function updateUser(id, fields) {
+  const updates = Object.entries(fields).filter(
+    ([k, v]) => k != null && v != null && allowedFields.includes(k)
+  );
+
+  if (updates.length === 0) {
+    throw new Error("There were no valid fields to update.");
+  }
+
+  const sets = updates.map(([k, _], index) => `SET ${k} = $${index + 2}`);
+  const values = updates.map(([_, v]) => v);
+
+  const SQL = `
+  UPDATE users
+  SET ${sets}
+  WHERE id = $1
+  RETURNING *
+  `;
+
+  const {
+    rows: [user],
+  } = await db.query(SQL, [id, ...values]);
 
   return user;
 }

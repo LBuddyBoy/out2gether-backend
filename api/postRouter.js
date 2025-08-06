@@ -3,7 +3,9 @@ import {
   deletePostById,
   getPostById,
   getPosts,
+  getPostsByField,
   getPostsNear,
+  searchPosts,
   updatePost,
 } from "#db/query/posts";
 import express from "express";
@@ -12,6 +14,7 @@ import {
   createPostLocation,
   updatePostLocation,
 } from "#db/query/post_locations";
+import requireUser from "#middleware/requireUser";
 
 const router = express.Router();
 
@@ -22,8 +25,28 @@ router.get("/:page/:limit", async (req, res) => {
   res.status(200).json(posts);
 });
 
+router.get("/search/:page/:limit/:query", async (req, res) => {
+  const { page, limit, query } = req.params;
+  const posts = await searchPosts(query, page, limit);
+
+  res.status(200).json(posts);
+});
+
 router.get(
-  "/:page/:limit/:miles",
+  "/filter/:field/:page/:limit",
+  requireBody(["minimum", "maximum"]),
+  async (req, res) => {
+    const { field, page, limit } = req.params;
+    const { minimum, maximum } = req.body;
+
+    res
+      .status(200)
+      .json(await getPostsByField(field, minimum, maximum, page, limit));
+  }
+);
+
+router.get(
+  "/near/:page/:limit/:miles",
   requireBody(["geolocation_latitude", "geolocation_longitude"]),
   async (req, res) => {
     const { page, limit, miles } = req.params;
@@ -80,7 +103,7 @@ router.param("id", async (req, res, next, id) => {
   const post = await getPostById(id);
 
   if (!post)
-    return res.status(404).json("A post with that id couldn't be found.");
+    return res.status(404).send("A post with that id couldn't be found.");
 
   req.post = post;
   next();
@@ -91,16 +114,24 @@ router
   .get(async (req, res) => {
     res.status(200).json(req.post);
   })
-  .put(requireBody([]), async (req, res) => {
+  .put(requireUser, requireBody([]), async (req, res) => {
+    if (req.post.owner_id !== req.user.id) {
+      return res.status(400).send("You do not own this post.");
+    }
+
     const update = await updatePost(req.post.id, req.body);
 
     res.status(200).json(update);
   })
-  .delete(async (req, res) => {
+  .delete(requireUser, async (req, res) => {
+    if (req.post.owner_id !== req.user.id) {
+      return res.status(400).send("You do not own this post.");
+    }
+
     const post = await deletePostById(req.post.id);
 
     if (post) {
-      res.status(204);
+      res.status(204).send("Post deleted.");
     }
   });
 

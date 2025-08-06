@@ -2,6 +2,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS cube;
 CREATE EXTENSION IF NOT EXISTS earthdistance;
 
+DROP TABLE IF EXISTS favorite_posts;
+DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS post_locations;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS categories;
@@ -32,7 +34,9 @@ CREATE TABLE posts(
     title text NOT NULL,
     body text NOT NULL,
     price decimal(10, 2) NOT NULL,
-    date date NOT NULL
+    date date NOT NULL,
+    time time NOT NULL,
+    image_url text NOT NULL DEFAULT 'https://via.placeholder.com/300'
 );
 
 CREATE TABLE post_locations(
@@ -47,9 +51,16 @@ CREATE TABLE post_locations(
 );
 
 CREATE TABLE cart_items(
-    post_id int PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,
+    post_id int REFERENCES posts(id) ON DELETE CASCADE,
     owner_id int REFERENCES users(id) ON DELETE CASCADE,
-    quantity int NOT NULL DEFAULT 1
+    quantity int NOT NULL DEFAULT 1,
+    PRIMARY KEY (post_id, owner_id)
+);
+
+CREATE TABLE favorite_posts(
+    post_id int REFERENCES posts(id) ON DELETE CASCADE,
+    user_id int REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (post_id, user_id)
 );
 
 -- earth_distance(ll_to_earth(102.039900, 18.672900), ll_to_earth(-140.367800, -56.644500));
