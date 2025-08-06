@@ -6,8 +6,6 @@ export async function createCartItem({ post_id, owner_id, quantity = 1 }) {
   const SQL = `
   INSERT INTO cart_items(post_id, owner_id, quantity)
   VALUES($1, $2, $3)
-  ON CONFLICT (post_id, owner_id) DO UPDATE
-  SET quantity = cart_items.quantity + $3
   RETURNING *;
   `;
 

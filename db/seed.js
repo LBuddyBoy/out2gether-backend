@@ -128,7 +128,7 @@ async function seedPosts() {
     },
   ];
 
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < dateIdeas.length; i++) {
     const idea = dateIdeas[i % dateIdeas.length];
     const date = customFaker.date.future({ years: 2 });
 

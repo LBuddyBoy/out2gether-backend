@@ -14,6 +14,7 @@ import {
   createPostLocation,
   updatePostLocation,
 } from "#db/query/post_locations";
+import requireUser from "#middleware/requireUser";
 
 const router = express.Router();
 
@@ -113,12 +114,20 @@ router
   .get(async (req, res) => {
     res.status(200).json(req.post);
   })
-  .put(requireBody([]), async (req, res) => {
+  .put(requireUser, requireBody([]), async (req, res) => {
+    if (req.post.owner_id !== req.user.id) {
+      return res.status(400).send("You do not own this post.");
+    }
+
     const update = await updatePost(req.post.id, req.body);
 
     res.status(200).json(update);
   })
-  .delete(async (req, res) => {
+  .delete(requireUser, async (req, res) => {
+    if (req.post.owner_id !== req.user.id) {
+      return res.status(400).send("You do not own this post.");
+    }
+
     const post = await deletePostById(req.post.id);
 
     if (post) {
