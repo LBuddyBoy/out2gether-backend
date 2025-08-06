@@ -20,7 +20,7 @@ router
 
     res.status(200).json(cart_items);
   })
-  .post(requireBody(["post_id"]), async (req, res) => {
+  .post(requireBody(["postId"]), async (req, res) => {
     const { post_id } = req.body;
 
     let cart_item = await getCartItem(req.user.id, post_id);

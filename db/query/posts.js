@@ -195,8 +195,8 @@ export async function deletePostById(id) {
  * Gets all posts within a certain radius of the origin
  *
  * @param {Object} params
- * @param {number} params.geolocation_latitude
- * @param {number} params.geolocation_longitude
+ * @param {number} params.geolocationLatitude
+ * @param {number} params.geolocationLongitude
  * @param {number} params.miles
  * @param {number} params.page
  * @param {number} params.limit
@@ -234,6 +234,16 @@ export async function getPostsNear({
   return rows;
 }
 
+/**
+ * Fetches a paginated list of posts that are within the parameters
+ * 
+ * @param {string} field the column of the table to query
+ * @param {number} minimum 
+ * @param {number} maximum 
+ * @param {number} page 
+ * @param {number} limit 
+ * @returns an array of posts
+ */
 export async function getPostsByField(field, minimum, maximum, page, limit) {
   if (!allowedFields.includes(field)) {
     throw new Error("That field queried is not valid.");
@@ -250,6 +260,34 @@ export async function getPostsByField(field, minimum, maximum, page, limit) {
   `;
 
   const { rows } = await db.query(SQL, [minimum, maximum, offset, limit]);
+
+  return rows;
+}
+
+/**
+ * Fetches a paginated array of posts by a user 
+ * 
+ * @param {number} userId 
+ * @param {number} page 
+ * @param {number} limit 
+ * @returns an array of posts posted by a user
+ */
+export async function getPostsByUserId(userId, page, limit) {
+  const offset = (page - 1) * limit;
+  const SQL = `
+  SELECT posts.*, row_to_json(users) AS user
+  FROM posts
+  JOIN (
+    SELECT ${PUBLIC_USER_RETURNS}
+    FROM users
+  ) users ON users.id = $1
+  WHERE posts.user_id = $1
+  ORDER BY posts.id
+  OFFSET $2
+  LIMIT $3
+  `;
+
+  const { rows } = await db.query(SQL, [userId, offset, limit]);
 
   return rows;
 }
