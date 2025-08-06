@@ -8,6 +8,7 @@ const allowedFields = [
   "geolocation_latitude",
   "is_admin",
 ];
+
 export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
 
 /**
@@ -108,6 +109,14 @@ export async function validateAccount({ email, password }) {
   return user;
 }
 
+/**
+ * Updates a user based on the fields
+ *
+ * @param {number} id
+ * @param {Object} fields
+ *
+ * @returns {Promise<Object>} the updated user
+ */
 export async function updateUser(id, fields) {
   const updates = Object.entries(fields).filter(
     ([k, v]) => k != null && v != null && allowedFields.includes(k)
