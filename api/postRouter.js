@@ -1,9 +1,9 @@
 import {
   createPost,
   deletePostById,
+  getFilteredPosts,
   getPostById,
   getPosts,
-  getPostsByField,
   getPostsNear,
   searchPosts,
   updatePost,
@@ -15,6 +15,7 @@ import {
   updatePostLocation,
 } from "#db/query/post_locations";
 import requireUser from "#middleware/requireUser";
+import requireQuery from "#middleware/requireQuery";
 
 const router = express.Router();
 
@@ -32,18 +33,21 @@ router.get("/search/:page/:limit/:query", async (req, res) => {
   res.status(200).json(posts);
 });
 
-router.get(
-  "/filter/:field/:page/:limit",
-  requireBody(["minimum", "maximum"]),
-  async (req, res) => {
-    const { field, page, limit } = req.params;
-    const { minimum, maximum } = req.body;
+router.get("/filter", requireQuery(["page", "limit"]), async (req, res) => {
+  const { page, limit } = req.query;
 
-    res
-      .status(200)
-      .json(await getPostsByField(field, minimum, maximum, page, limit));
-  }
-);
+  console.log("Query: ", req.query);
+
+  res
+    .status(200)
+    .json(
+      await getFilteredPosts({
+        ...req.query,
+        page: Number(page),
+        limit: Number(limit),
+      })
+    );
+});
 
 router.get(
   "/near/:page/:limit/:miles",

@@ -234,42 +234,73 @@ export async function getPostsNear({
   return rows;
 }
 
-/**
- * Fetches a paginated list of posts that are within the parameters
- * 
- * @param {string} field the column of the table to query
- * @param {number} minimum 
- * @param {number} maximum 
- * @param {number} page 
- * @param {number} limit 
- * @returns an array of posts
- */
-export async function getPostsByField(field, minimum, maximum, page, limit) {
-  if (!allowedFields.includes(field)) {
-    throw new Error("That field queried is not valid.");
+export async function getFilteredPosts({
+  minDate,
+  maxDate,
+  minPrice,
+  maxPrice,
+  categoryIds,
+  page,
+  limit,
+}) {
+  const offset = (page - 1) * limit;
+  const params = [offset, limit];
+  const whereClauses = [];
+
+  if (minDate && maxDate && minDate != null && maxDate != null) {
+    const param = params.length;
+    whereClauses.push(
+      `posts.date >= $${param + 1} AND posts.date <= $${param + 2}`
+    );
+    params.push(minDate, maxDate);
   }
 
-  const offset = (page - 1) * limit;
+  if (minPrice && maxPrice && minPrice != null && maxPrice != null) {
+    const param = params.length;
+    whereClauses.push(
+      `posts.price >= $${param + 1} AND posts.price <= $${param + 2}`
+    );
+    params.push(minPrice, maxPrice);
+  }
+
+  if (categoryIds && categoryIds != null) {
+    const categoryClauses = [];
+    const ids = categoryIds.split(",");
+
+    for (const index in ids) {
+      const categoryId = ids[index];
+      const param = params.length;
+      categoryClauses.push(`posts.category_id = $${param + 1}`);
+      params.push(categoryId);
+    }
+    
+    whereClauses.push(categoryClauses.join(" OR "));
+  }
+
+  console.log(params);
+
   const SQL = `
-  SELECT * 
+  SELECT *
   FROM posts
-  WHERE posts.${field} >= $1 AND posts.${field} <= $2
-  ORDER BY posts.${field}
-  OFFSET $3
-  LIMIT $4
+  ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}
+  ORDER BY (posts.date, posts.price) ASC
+  OFFSET $1
+  LIMIT $2
   `;
 
-  const { rows } = await db.query(SQL, [minimum, maximum, offset, limit]);
+  console.log(SQL);
+
+  const { rows } = await db.query(SQL, params);
 
   return rows;
 }
 
 /**
- * Fetches a paginated array of posts by a user 
- * 
- * @param {number} userId 
- * @param {number} page 
- * @param {number} limit 
+ * Fetches a paginated array of posts by a user
+ *
+ * @param {number} userId
+ * @param {number} page
+ * @param {number} limit
  * @returns an array of posts posted by a user
  */
 export async function getPostsByUserId(userId, page, limit) {
