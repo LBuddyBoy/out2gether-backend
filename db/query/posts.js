@@ -1,5 +1,6 @@
 import db from "#db/client";
 import { PUBLIC_USER_RETURNS } from "#db/query/users";
+import { isValid, isValidArray } from "#util/util";
 
 const allowedFields = [
   "user_id",
@@ -189,110 +190,6 @@ export async function deletePostById(id) {
   } = await db.query(SQL, [id]);
 
   return post;
-}
-
-/**
- * Gets all posts within a certain radius of the origin
- *
- * @param {Object} params
- * @param {number} params.geolocationLatitude
- * @param {number} params.geolocationLongitude
- * @param {number} params.miles
- * @param {number} params.page
- * @param {number} params.limit
- * @returns an array of posts with their distance from the origin
- */
-export async function getPostsNear({
-  geolocation_latitude,
-  geolocation_longitude,
-  miles,
-  page,
-  limit,
-}) {
-  const offset = (page - 1) * limit;
-  const meters = miles * 1609.34;
-  const SQL = `
-  SELECT posts.*, row_to_json(post_locations) AS location
-  FROM posts
-  JOIN (
-    SELECT pl.*, earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) AS distance_meters
-    FROM post_locations pl
-  ) post_locations ON post_locations.post_id = posts.id AND post_locations.distance_meters < $3
-  ORDER BY post_locations.distance_meters ASC
-  OFFSET $4
-  LIMIT $5
-  `;
-
-  const { rows } = await db.query(SQL, [
-    geolocation_latitude,
-    geolocation_longitude,
-    meters,
-    offset,
-    limit,
-  ]);
-
-  return rows;
-}
-
-export async function getFilteredPosts({
-  minDate,
-  maxDate,
-  minPrice,
-  maxPrice,
-  categoryIds,
-  page,
-  limit,
-}) {
-  const offset = (page - 1) * limit;
-  const params = [offset, limit];
-  const whereClauses = [];
-
-  if (minDate && maxDate && minDate != null && maxDate != null) {
-    const param = params.length;
-    whereClauses.push(
-      `posts.date >= $${param + 1} AND posts.date <= $${param + 2}`
-    );
-    params.push(minDate, maxDate);
-  }
-
-  if (minPrice && maxPrice && minPrice != null && maxPrice != null) {
-    const param = params.length;
-    whereClauses.push(
-      `posts.price >= $${param + 1} AND posts.price <= $${param + 2}`
-    );
-    params.push(minPrice, maxPrice);
-  }
-
-  if (categoryIds && categoryIds != null) {
-    const categoryClauses = [];
-    const ids = categoryIds.split(",");
-
-    for (const index in ids) {
-      const categoryId = ids[index];
-      const param = params.length;
-      categoryClauses.push(`posts.category_id = $${param + 1}`);
-      params.push(categoryId);
-    }
-    
-    whereClauses.push(categoryClauses.join(" OR "));
-  }
-
-  console.log(params);
-
-  const SQL = `
-  SELECT *
-  FROM posts
-  ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}
-  ORDER BY (posts.date, posts.price) ASC
-  OFFSET $1
-  LIMIT $2
-  `;
-
-  console.log(SQL);
-
-  const { rows } = await db.query(SQL, params);
-
-  return rows;
 }
 
 /**
