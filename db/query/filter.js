@@ -1,4 +1,5 @@
 import db from "#db/client";
+import { isValid, isValidArray } from "#util/util";
 
 const allowedFields = [
   "category_ids",
@@ -99,7 +100,7 @@ export async function getFilteredPosts({
     orderClauses.push("posts.date");
   }
 
-  if (isValidArray([min_price, max_price])) {
+  if (isValidArray([min_price, max_price]) && min_price > 0 && max_price > 0) {
     const param = params.length;
     whereClauses.push(
       `posts.price >= $${param + 1} AND posts.price <= $${param + 2}`
