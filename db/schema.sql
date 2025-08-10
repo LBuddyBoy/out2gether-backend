@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS post_locations;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS filters;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users(
@@ -15,9 +16,19 @@ CREATE TABLE users(
     email text NOT NULL UNIQUE,
     password text NOT NULL,
     avatar_url text NOT NULL DEFAULT 'https://www.gravatar.com/avatar/?d=mp&s=64',
+    is_admin boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE filters(
+    user_id int PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    category_ids int[] DEFAULT '{}',
+    min_price decimal(10, 2) DEFAULT 0,
+    max_price decimal(10, 2) DEFAULT 10000,
+    min_date date,
+    max_date date,
     geolocation_latitude double precision,
     geolocation_longitude double precision,
-    is_admin boolean NOT NULL DEFAULT false
+    distance_miles int DEFAULT 25
 );
 
 CREATE TABLE categories(

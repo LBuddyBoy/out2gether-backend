@@ -1,11 +1,7 @@
 import {
   createPost,
   deletePostById,
-  getFilteredPosts,
   getPostById,
-  getPosts,
-  getPostsNear,
-  searchPosts,
   updatePost,
 } from "#db/query/posts";
 import express from "express";
@@ -16,56 +12,26 @@ import {
 } from "#db/query/post_locations";
 import requireUser from "#middleware/requireUser";
 import requireQuery from "#middleware/requireQuery";
+import { getFilterByUserId, getFilteredPosts } from "#db/query/filter";
 
 const router = express.Router();
 
-router.get("/:page/:limit", async (req, res) => {
-  const { page, limit } = req.params;
-  const posts = await getPosts(page, limit);
-
-  res.status(200).json(posts);
-});
-
-router.get("/search/:page/:limit/:query", async (req, res) => {
-  const { page, limit, query } = req.params;
-  const posts = await searchPosts(query, page, limit);
-
-  res.status(200).json(posts);
-});
-
-router.get("/filter", requireQuery(["page", "limit"]), async (req, res) => {
+router.get("/", requireQuery(["page", "limit"], true), async (req, res) => {
   const { page, limit } = req.query;
+  let filter = {};
 
-  console.log("Query: ", req.query);
-
-  res
-    .status(200)
-    .json(
-      await getFilteredPosts({
-        ...req.query,
-        page: Number(page),
-        limit: Number(limit),
-      })
-    );
-});
-
-router.get(
-  "/near/:page/:limit/:miles",
-  requireBody(["geolocation_latitude", "geolocation_longitude"]),
-  async (req, res) => {
-    const { page, limit, miles } = req.params;
-    const { geolocation_latitude, geolocation_longitude } = req.body;
-    const posts = await getPostsNear({
-      geolocation_latitude,
-      geolocation_longitude,
-      miles,
-      page,
-      limit,
-    });
-
-    res.status(200).json(posts);
+  if (req.user) {
+    filter = (await getFilterByUserId(req.user.id)) || {};
   }
-);
+
+  res.status(200).json(
+    await getFilteredPosts({
+      page: Number(page),
+      limit: Number(limit),
+      ...filter,
+    })
+  );
+});
 
 router.post(
   "/",

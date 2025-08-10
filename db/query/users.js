@@ -1,13 +1,6 @@
 import db from "#db/client";
 
-const allowedFields = [
-  "username",
-  "email",
-  "password",
-  "geolocation_longitude",
-  "geolocation_latitude",
-  "is_admin",
-];
+const allowedFields = ["username", "email", "password", "is_admin"];
 
 export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
 
@@ -18,8 +11,6 @@ export const PUBLIC_USER_RETURNS = "id, username, email, avatar_url";
  * @param {string} params.username
  * @param {string} params.email
  * @param {string} params.password
- * @param {number} params.geolocation_longitude the longitude of the user (e.g., -32.0715)
- * @param {number} params.geolocation_latitude the latitude of the user (e.g., 20.9511)
  *
  * @returns {Promise<Object>} The created user object (public fields only).
  */
@@ -27,26 +18,17 @@ export async function createUser({
   username,
   email,
   password,
-  geolocation_longitude = null,
-  geolocation_latitude = null,
   is_admin = false,
 }) {
   const SQL = `
-    INSERT INTO users(username, email, password, geolocation_longitude, geolocation_latitude, is_admin)
+    INSERT INTO users(username, email, password, is_admin)
     VALUES($1, $2, crypt($3, gen_salt('bf')), $4, $5, $6)
     RETURNING ${PUBLIC_USER_RETURNS}
     `;
 
   const {
     rows: [user],
-  } = await db.query(SQL, [
-    username,
-    email,
-    password,
-    geolocation_longitude,
-    geolocation_latitude,
-    is_admin,
-  ]);
+  } = await db.query(SQL, [username, email, password, is_admin]);
 
   return user;
 }
