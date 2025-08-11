@@ -3,5 +3,5 @@ export function isValid(value) {
 }
 
 export function isValidArray(array) {
-  return Array.isArray(array) && array.filter((v) => isValid(v)).length > 0;
+  return Array.isArray(array) && array.every((v) => isValid(v));
 }

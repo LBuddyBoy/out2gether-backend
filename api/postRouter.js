@@ -32,6 +32,8 @@ router.get("/", requireQuery(["page", "limit"], true), async (req, res) => {
     }
   }
 
+  console.log("Filter: ", filter);
+
   res.status(200).json(
     await getFilteredPosts({
       ...filter,
