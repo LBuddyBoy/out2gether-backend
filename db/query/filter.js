@@ -85,6 +85,20 @@ export async function getFilteredPosts({
   page,
   limit,
 }) {
+  console.log("getFilteredPosts variables:", {
+    min_date,
+    max_date,
+    min_price,
+    max_price,
+    category_ids,
+    geolocation_latitude,
+    geolocation_longitude,
+    distance_miles,
+    userId,
+    searchQuery,
+    page,
+    limit,
+  });
   const offset = (page - 1) * limit;
   const params = [offset, limit];
   const selectStatements = ["posts.*"];
@@ -113,16 +127,14 @@ export async function getFilteredPosts({
   if (isValid(searchQuery)) {
     const param = params.length;
     whereClauses.push(
-      `posts.title ILIKE $${param + 1} OR posts.body ILIKE $${param + 1}`
+      `(posts.title ILIKE $${param + 1} OR posts.body ILIKE $${param + 1})`
     );
     params.push(`%${searchQuery}%`);
   }
 
   if (isValid(userId)) {
     const param = params.length;
-    whereClauses.push(
-      `posts.user_id = $${param + 1}`
-    );
+    whereClauses.push(`posts.user_id = $${param + 1}`);
     params.push(userId);
   }
 
