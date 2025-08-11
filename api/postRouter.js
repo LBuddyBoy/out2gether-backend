@@ -12,7 +12,11 @@ import {
 } from "#db/query/post_locations";
 import requireUser from "#middleware/requireUser";
 import requireQuery from "#middleware/requireQuery";
-import { getFilterByUserId, getFilteredPosts } from "#db/query/filter";
+import {
+  createFilter,
+  getFilterByUserId,
+  getFilteredPosts,
+} from "#db/query/filter";
 
 const router = express.Router();
 
@@ -22,6 +26,10 @@ router.get("/", requireQuery(["page", "limit"], true), async (req, res) => {
 
   if (autoFilter && req.user) {
     filter = (await getFilterByUserId(req.user.id)) || {};
+
+    if (!filter) {
+      filter = await createFilter({ user_id: req.user.id });
+    }
   }
 
   res.status(200).json(
