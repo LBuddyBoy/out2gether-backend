@@ -97,7 +97,7 @@ export async function getFilteredPosts({
     whereClauses.push(
       `posts.date >= $${param + 1} AND posts.date <= $${param + 2}`
     );
-    params.push(min_date.split("T")[0], max_date.split("T")[0]);
+    params.push(min_date, max_date);
     orderClauses.push("posts.date");
   }
 
