@@ -38,16 +38,12 @@ async function seedUsers() {
       username: "Admin",
       email: "admin123@gmail.com",
       password: "password123",
-      geolocation_latitude: 29.88195,
-      geolocation_longitude: -90.02341,
       is_admin: true,
     },
     {
       username: "User",
       email: "user123@gmail.com",
       password: "password123",
-      geolocation_latitude: 29.88195,
-      geolocation_longitude: -90.02341,
       is_admin: false,
     },
   ];
