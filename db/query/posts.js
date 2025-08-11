@@ -19,10 +19,12 @@ const allowedFields = [
  * @param {Object} params
  * @param {number} params.user_id
  * @param {number} params.category_id
- * @param {number} params.title
- * @param {number} params.body
+ * @param {string} params.title
+ * @param {string} params.body
  * @param {number} params.price
- * @param {number} params.date
+ * @param {string} params.date
+ * @param {string} params.time
+ * @param {string} params.image_url
  *
  * @returns {Promise<Object>} the post created
  */

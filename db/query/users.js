@@ -22,7 +22,7 @@ export async function createUser({
 }) {
   const SQL = `
     INSERT INTO users(username, email, password, is_admin)
-    VALUES($1, $2, crypt($3, gen_salt('bf')), $4, $5, $6)
+    VALUES($1, $2, crypt($3, gen_salt('bf')), $4)
     RETURNING ${PUBLIC_USER_RETURNS}
     `;
 

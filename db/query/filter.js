@@ -80,6 +80,7 @@ export async function getFilteredPosts({
   geolocation_latitude,
   geolocation_longitude,
   distance_miles,
+  userId,
   searchQuery,
   page,
   limit,
@@ -100,7 +101,7 @@ export async function getFilteredPosts({
     orderClauses.push("posts.date");
   }
 
-  if (isValidArray([min_price, max_price]) && min_price > 0 && max_price > 0) {
+  if (isValidArray([min_price, max_price]) && min_price >= 0 && max_price > 0) {
     const param = params.length;
     whereClauses.push(
       `posts.price >= $${param + 1} AND posts.price <= $${param + 2}`
@@ -115,6 +116,14 @@ export async function getFilteredPosts({
       `posts.title ILIKE $${param + 1} OR posts.body ILIKE $${param + 1}`
     );
     params.push(`%${searchQuery}%`);
+  }
+
+  if (isValid(userId)) {
+    const param = params.length;
+    whereClauses.push(
+      `posts.user_id = $${param + 1}`
+    );
+    params.push(userId);
   }
 
   if (

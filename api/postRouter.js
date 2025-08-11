@@ -17,30 +17,34 @@ import { getFilterByUserId, getFilteredPosts } from "#db/query/filter";
 const router = express.Router();
 
 router.get("/", requireQuery(["page", "limit"], true), async (req, res) => {
-  const { page, limit } = req.query;
+  const { page, limit, autoFilter } = req.query;
   let filter = {};
 
-  if (req.user) {
+  if (autoFilter && req.user) {
     filter = (await getFilterByUserId(req.user.id)) || {};
   }
 
   res.status(200).json(
     await getFilteredPosts({
+      ...filter,
+      ...req.query,
       page: Number(page),
       limit: Number(limit),
-      ...filter,
     })
   );
 });
 
 router.post(
   "/",
+  requireUser,
   requireBody([
-    "user_id",
+    "category_id",
     "title",
     "body",
     "price",
     "date",
+    "time",
+    "image_url",
     "address",
     "country",
     "state",
@@ -50,7 +54,12 @@ router.post(
     "geolocation_latitude",
   ]),
   async (req, res) => {
-    const post = await createPost(req.body);
+    console.log("Create Post: ", req.body);
+
+    const post = await createPost({
+      user_id: req.user.id,
+      ...req.body,
+    });
 
     if (!post) {
       return;
