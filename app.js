@@ -14,7 +14,7 @@ const app = express();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
-    credentials: true, // only if you send cookies/Authorization
+    credentials: true,
   })
 );
 
