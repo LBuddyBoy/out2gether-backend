@@ -11,9 +11,21 @@ import getUserFromToken from "#middleware/getUserFromToken";
 
 const app = express();
 
-app.use(cors({
-  origin: [process.env.FRONTEND_URL, "http://localhost:5173"],
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true, // only if you send cookies/Authorization
+  })
+);
+
+app.options(
+  "*",
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: "5mb" }));
 app.use(morgan("dev"));
 
