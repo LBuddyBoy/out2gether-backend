@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node --env-file=.env server.js",
     "dev": "node --watch --env-file=.env server.js",
+    "prod:schema": "psql postgresql://backend_gqyg_user:vddQBJH5hfJOJgeKnk7Z61JFb7cC9Uec@dpg-d2d8q9juibrs739cji40-a.oregon-postgres.render.com/outtogether?sslmode=require -d outtogether -f ./db/schema.sql",
     "db:schema": "psql -d outtogether -f ./db/schema.sql",
     "db:seed": "node --env-file=.env db/seed.js",
     "db:reset": "npm run db:schema && npm run db:seed"
