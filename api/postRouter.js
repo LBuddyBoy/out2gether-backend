@@ -3,6 +3,7 @@ import {
   deletePostById,
   getPostById,
   updatePost,
+  getPostsNearby,
 } from "#db/query/posts";
 import express from "express";
 import requireBody from "#middleware/requireBody";
@@ -20,29 +21,52 @@ import {
 
 const router = express.Router();
 
-router.get("/", requireQuery(["page", "limit"], true), async (req, res) => {
-  const { page, limit, autoFilter } = req.query;
-  let filter = {};
+router.get("/", requireQuery(["page", "limit"]), async (req, res, next) => {
+  try {
+    const { page, limit, autoFilter, userId } = req.query;
 
-  if (autoFilter && req.user) {
-    filter = (await getFilterByUserId(req.user.id)) || {};
+    if (userId) {
+      const posts = await getFilteredPosts({
+        page: Number(page),
+        limit: Number(limit),
+        userId: Number(userId),
+      });
+      return res.status(200).json(posts);
+    }
 
-    if (!filter) {
-      filter = await createFilter({ user_id: req.user.id });
+    let filter = {};
+    if (autoFilter && req.user) {
+      filter = (await getFilterByUserId(req.user.id)) || {};
+      if (!filter) {
+        filter = await createFilter({ user_id: req.user.id });
+      }
+    }
+
+    res.status(200).json(
+      await getFilteredPosts({
+        ...filter,
+        ...req.query,
+        page: Number(page),
+        limit: Number(limit),
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get(
+  "/nearby",
+  requireQuery(["page", "limit", "latitude", "longitude"]),
+  async (req, res, next) => {
+    try {
+      const posts = await getPostsNearby(req.query);
+      res.send(posts);
+    } catch (error) {
+      next(error);
     }
   }
-
-  console.log("Filter: ", filter);
-
-  res.status(200).json(
-    await getFilteredPosts({
-      ...filter,
-      ...req.query,
-      page: Number(page),
-      limit: Number(limit),
-    })
-  );
-});
+);
 
 router.post(
   "/",
@@ -104,7 +128,7 @@ router
     res.status(200).json(req.post);
   })
   .put(requireUser, requireBody([]), async (req, res) => {
-    if (req.post.owner_id !== req.user.id) {
+    if (req.post.user_id !== req.user.id) {
       return res.status(400).send("You do not own this post.");
     }
 
@@ -113,7 +137,7 @@ router
     res.status(200).json(update);
   })
   .delete(requireUser, async (req, res) => {
-    if (req.post.owner_id !== req.user.id) {
+    if (req.post.user_id !== req.user.id) {
       return res.status(400).send("You do not own this post.");
     }
 

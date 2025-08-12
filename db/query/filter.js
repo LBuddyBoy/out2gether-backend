@@ -99,93 +99,86 @@ export async function getFilteredPosts({
     page,
     limit,
   });
+
   const offset = (page - 1) * limit;
-  const params = [offset, limit];
-  const selectStatements = ["posts.*"];
+
+  const params = [];
+  let paramIndex = 1;
+
+  const selectStatements = [
+    "posts.*",
+    "row_to_json(u) as user",
+    "row_to_json(pl) AS location",
+  ];
   const whereClauses = [];
-  const orderClauses = ["posts.id", "posts.created_at"];
-  const joinClauses = [];
+  const orderClauses = ["posts.created_at DESC"];
+  const joinClauses = [
+    "JOIN post_locations pl ON pl.post_id = posts.id",
+    "JOIN (SELECT id, username, avatar_url FROM users) u ON u.id = posts.user_id",
+  ];
 
   if (isValidArray([min_date, max_date])) {
-    const param = params.length;
     whereClauses.push(
-      `posts.date >= $${param + 1} AND posts.date <= $${param + 2}`
+      `posts.date >= $${paramIndex++} AND posts.date <= $${paramIndex++}`
     );
     params.push(min_date, max_date);
-    orderClauses.push("posts.date");
   }
 
   if (isValidArray([min_price, max_price]) && min_price >= 0 && max_price > 0) {
-    const param = params.length;
     whereClauses.push(
-      `posts.price >= $${param + 1} AND posts.price <= $${param + 2}`
+      `posts.price >= $${paramIndex++} AND posts.price <= $${paramIndex++}`
     );
     params.push(min_price, max_price);
-    orderClauses.push("posts.price");
   }
 
   if (isValid(searchQuery)) {
-    const param = params.length;
     whereClauses.push(
-      `(posts.title ILIKE $${param + 1} OR posts.body ILIKE $${param + 1})`
+      `(posts.title ILIKE $${paramIndex} OR posts.body ILIKE $${paramIndex++})`
     );
     params.push(`%${searchQuery}%`);
   }
 
   if (isValid(userId)) {
-    const param = params.length;
-    whereClauses.push(`posts.user_id = $${param + 1}`);
+    whereClauses.push(`posts.user_id = $${paramIndex++}`);
     params.push(userId);
   }
 
-  if (
-    isValidArray([geolocation_latitude, geolocation_longitude, distance_miles])
-  ) {
-    const param = params.length;
-    const JOIN_SQL = `
-    JOIN (
-      SELECT pl.*, earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($${
-        param + 1
-      }, $${param + 2})) AS distance_meters
-      FROM post_locations pl
-    ) post_locations ON post_locations.post_id = posts.id AND post_locations.distance_meters < $${
-      param + 3
-    }
-    `;
-    const meters = distance_miles * 1609.34;
-
-    joinClauses.push(JOIN_SQL);
-    orderClauses.push("post_locations.distance_meters");
-    selectStatements.push("row_to_json(post_locations) AS location");
+  if (isValidArray([geolocation_latitude, geolocation_longitude])) {
+    const miles = distance_miles || 20;
+    const meters = miles * 1609.34;
     params.push(geolocation_latitude, geolocation_longitude, meters);
+    whereClauses.push(
+      `earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($${paramIndex++}, $${paramIndex++})) < $${paramIndex++}`
+    );
+
+    orderClauses.splice(
+      0,
+      orderClauses.length,
+      `earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) ASC`
+    );
   }
 
   if (isValid(category_ids) && category_ids.length > 0) {
     const categoryClauses = [];
-
-    for (const index in category_ids) {
-      const categoryId = category_ids[index];
-      const param = params.length;
-      categoryClauses.push(`posts.category_id = $${param + 1}`);
+    for (const categoryId of category_ids) {
+      categoryClauses.push(`posts.category_id = $${paramIndex++}`);
       params.push(categoryId);
     }
-
-    whereClauses.push("(" + categoryClauses.join(" OR ") + ")");
+    whereClauses.push(`(${categoryClauses.join(" OR ")})`);
   }
 
+  params.push(offset, limit);
+
   const SQL = `
-  SELECT ${selectStatements.join(", ")}
-  FROM posts
-  ${joinClauses.length > 0 ? joinClauses.join(" ") : ""}
-  ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}
-  ORDER BY (${orderClauses.join(", ")}) ASC
-  OFFSET $1
-  LIMIT $2
+    SELECT ${selectStatements.join(", ")}
+    FROM posts
+    ${joinClauses.join(" ")}
+    ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}
+    ORDER BY ${orderClauses.join(", ")}
+    OFFSET $${paramIndex++}
+    LIMIT $${paramIndex++}
   `;
 
-  console.log("SQL:", SQL);
-
   const { rows } = await db.query(SQL, params);
-
   return rows;
 }

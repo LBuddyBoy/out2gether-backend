@@ -123,13 +123,16 @@ export async function searchPosts(query, page, limit) {
  */
 export async function getPostById(id) {
   const SQL = `
-  SELECT posts.*, row_to_json(post_locations) AS location, row_to_json(users) AS user
-  FROM posts
-  JOIN post_locations ON post_locations.post_id = $1
-  JOIN (
-    SELECT ${PUBLIC_USER_RETURNS} FROM users
-  ) users ON users.id = posts.user_id
-  WHERE posts.id = $1
+    SELECT 
+      posts.*, 
+      row_to_json(pl) AS location, 
+      row_to_json(u) AS user
+    FROM posts
+    JOIN post_locations pl ON pl.post_id = posts.id
+    JOIN (
+      SELECT ${PUBLIC_USER_RETURNS} FROM users
+    ) u ON u.id = posts.user_id
+    WHERE posts.id = $1
   `;
 
   const {
@@ -219,5 +222,31 @@ export async function getPostsByUserId(userId, page, limit) {
 
   const { rows } = await db.query(SQL, [userId, offset, limit]);
 
+  return rows;
+}
+
+export async function getPostsNearby({ latitude, longitude, page, limit }) {
+  const offset = (page - 1) * limit;
+  const miles = 20;
+  const meters = miles * 1609.34;
+
+  const SQL = `
+    SELECT posts.*, row_to_json(pl) AS location, row_to_json(u) as user
+    FROM posts
+    JOIN post_locations pl ON pl.post_id = posts.id
+    JOIN (SELECT id, username, avatar_url FROM users) u ON u.id = posts.user_id
+    WHERE earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) < $3
+    ORDER BY earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2))
+    OFFSET $4
+    LIMIT $5
+  `;
+
+  const { rows } = await db.query(SQL, [
+    latitude,
+    longitude,
+    meters,
+    offset,
+    limit,
+  ]);
   return rows;
 }
