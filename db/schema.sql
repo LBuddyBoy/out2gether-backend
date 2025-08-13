@@ -2,6 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS cube;
 CREATE EXTENSION IF NOT EXISTS earthdistance;
 
+DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS favorite_posts;
 DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS post_locations;
@@ -23,12 +24,12 @@ CREATE TABLE filters(
     user_id int PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     category_ids int[] DEFAULT '{}',
     min_price decimal(10, 2) DEFAULT 0,
-    max_price decimal(10, 2) DEFAULT 10000,
+    max_price decimal(10, 2) DEFAULT 0,
     min_date date,
     max_date date,
     geolocation_latitude double precision,
     geolocation_longitude double precision,
-    distance_miles int DEFAULT 25
+    distance_miles int DEFAULT 0
 );
 
 CREATE TABLE categories(
@@ -73,6 +74,17 @@ CREATE TABLE favorite_posts(
     user_id int REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, user_id)
 );
+
+CREATE TABLE notifications(
+    id serial PRIMARY KEY,
+    user_id int REFERENCES users(id) ON DELETE CASCADE,
+    message text NOT NULL,
+    is_read boolean NOT NULL DEFAULT false,
+    duration int NOT NULL DEFAULT 5000,
+    created_at timestamp NOT NULL DEFAULT now()
+);
+
+\q
 
 -- earth_distance(ll_to_earth(102.039900, 18.672900), ll_to_earth(-140.367800, -56.644500));
 --  13989518.293139538

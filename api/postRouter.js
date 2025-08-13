@@ -3,7 +3,6 @@ import {
   deletePostById,
   getPostById,
   updatePost,
-  getPostsNearby,
 } from "#db/query/posts";
 import express from "express";
 import requireBody from "#middleware/requireBody";
@@ -23,20 +22,12 @@ const router = express.Router();
 
 router.get("/", requireQuery(["page", "limit"]), async (req, res, next) => {
   try {
-    const { page, limit, autoFilter, userId } = req.query;
-
-    if (userId) {
-      const posts = await getFilteredPosts({
-        page: Number(page),
-        limit: Number(limit),
-        userId: Number(userId),
-      });
-      return res.status(200).json(posts);
-    }
-
+    const { page, limit, filterOverrides } = req.query;
     let filter = {};
-    if (autoFilter && req.user) {
+
+    if (filterOverrides && req.user) {
       filter = (await getFilterByUserId(req.user.id)) || {};
+
       if (!filter) {
         filter = await createFilter({ user_id: req.user.id });
       }
@@ -54,19 +45,6 @@ router.get("/", requireQuery(["page", "limit"]), async (req, res, next) => {
     next(error);
   }
 });
-
-router.get(
-  "/nearby",
-  requireQuery(["page", "limit", "latitude", "longitude"]),
-  async (req, res, next) => {
-    try {
-      const posts = await getPostsNearby(req.query);
-      res.send(posts);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
 
 router.post(
   "/",
@@ -88,8 +66,6 @@ router.post(
     "geolocation_latitude",
   ]),
   async (req, res) => {
-    console.log("Create Post: ", req.body);
-
     const post = await createPost({
       user_id: req.user.id,
       ...req.body,
@@ -108,12 +84,12 @@ router.post(
       return;
     }
 
-    res.status(201).json("Post created!");
+    res.status(201).json(await getPostById(post.id, req.user?.id));
   }
 );
 
 router.param("id", async (req, res, next, id) => {
-  const post = await getPostById(id);
+  const post = await getPostById(id, req.user?.id);
 
   if (!post)
     return res.status(404).send("A post with that id couldn't be found.");

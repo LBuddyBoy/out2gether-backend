@@ -63,65 +63,13 @@ export async function createPost({
 }
 
 /**
- * Gets all posts
- *
- * @param {number} page the page currently on
- * @param {number} limit the limit to retrieve
- *
- * @returns {Promise<Object[]>} the posts found
- */
-export async function getPosts(page, limit) {
-  const offset = (page - 1) * limit;
-
-  const SQL = `
-    SELECT posts.*, row_to_json(post_locations) AS location
-    FROM posts
-    JOIN post_locations ON post_locations.post_id = posts.id
-    ORDER BY (posts.id, posts.created_at) DESC
-    OFFSET $1
-    LIMIT $2
-    `;
-
-  const { rows } = await db.query(SQL, [offset, limit]);
-
-  return rows;
-}
-
-/**
- * Gets all posts based on a query
- *
- * @param {number} query the keyword to search
- * @param {number} page the page currently on
- * @param {number} limit the limit to retrieve
- *
- * @returns {Promise<Object[]>} the posts found
- */
-export async function searchPosts(query, page, limit) {
-  const offset = (page - 1) * limit;
-
-  const SQL = `
-    SELECT posts.*, row_to_json(post_locations) AS location
-    FROM posts
-    JOIN post_locations ON post_locations.post_id = posts.id
-    WHERE posts.title ILIKE $3 OR posts.body ILIKE $3
-    ORDER BY (posts.id, posts.created_at) DESC
-    OFFSET $1
-    LIMIT $2
-    `;
-
-  const { rows } = await db.query(SQL, [offset, limit, `%${query}%`]);
-
-  return rows;
-}
-
-/**
  * Finds a post by it's id
  *
  * @param {number} id the id of the post to query
  *
  * @returns {Promise<Object>} the post that was found
  */
-export async function getPostById(id) {
+export async function getPostById(id, viewerUserId) {
   const SQL = `
     SELECT 
       posts.*, 
@@ -195,58 +143,4 @@ export async function deletePostById(id) {
   } = await db.query(SQL, [id]);
 
   return post;
-}
-
-/**
- * Fetches a paginated array of posts by a user
- *
- * @param {number} userId
- * @param {number} page
- * @param {number} limit
- * @returns an array of posts posted by a user
- */
-export async function getPostsByUserId(userId, page, limit) {
-  const offset = (page - 1) * limit;
-  const SQL = `
-  SELECT posts.*, row_to_json(users) AS user
-  FROM posts
-  JOIN (
-    SELECT ${PUBLIC_USER_RETURNS}
-    FROM users
-  ) users ON users.id = $1
-  WHERE posts.user_id = $1
-  ORDER BY posts.id
-  OFFSET $2
-  LIMIT $3
-  `;
-
-  const { rows } = await db.query(SQL, [userId, offset, limit]);
-
-  return rows;
-}
-
-export async function getPostsNearby({ latitude, longitude, page, limit }) {
-  const offset = (page - 1) * limit;
-  const miles = 20;
-  const meters = miles * 1609.34;
-
-  const SQL = `
-    SELECT posts.*, row_to_json(pl) AS location, row_to_json(u) as user
-    FROM posts
-    JOIN post_locations pl ON pl.post_id = posts.id
-    JOIN (SELECT id, username, avatar_url FROM users) u ON u.id = posts.user_id
-    WHERE earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) < $3
-    ORDER BY earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2))
-    OFFSET $4
-    LIMIT $5
-  `;
-
-  const { rows } = await db.query(SQL, [
-    latitude,
-    longitude,
-    meters,
-    offset,
-    limit,
-  ]);
-  return rows;
 }

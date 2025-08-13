@@ -50,7 +50,7 @@ router
   });
 
 router.param("id", async (req, res, next, id) => {
-  const post = await getPostById(id);
+  const post = await getPostById(id, req.user?.id);
 
   if (!post)
     return res.status(404).send("A post with that id couldn't be found.");
