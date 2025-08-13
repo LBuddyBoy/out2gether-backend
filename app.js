@@ -7,6 +7,7 @@ import postRouter from "#api/postRouter";
 import categoryRouter from "#api/categoryRouter";
 import cartRouter from "#api/cartRouter";
 import filterRouter from "#api/filterRouter";
+import notificationRouter from "#api/notificationRouter";
 import getUserFromToken from "#middleware/getUserFromToken";
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/favorites", favoriteRouter);
 app.use("/cart", cartRouter);
 app.use("/categories", categoryRouter);
 app.use("/posts", postRouter);
+app.use("/notifications", notificationRouter);
 
 app.get("/", (req, res) => {
   res.send("Out2Gether Online ✅");

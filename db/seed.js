@@ -1,11 +1,13 @@
 import db from "#db/client";
 import { base, de, de_CH, en, Faker } from "@faker-js/faker";
 import { createUser, getUsers } from "#db/query/users";
-import { createPost, getPosts } from "#db/query/posts";
+import { createPost } from "#db/query/posts";
 import { createPostLocation } from "#db/query/post_locations";
 import { createCategory, getCategories } from "#db/query/categories";
 import { createCartItem } from "#db/query/cart_items";
 import { createFavoritePost } from "#db/query/favorite_posts";
+import seededPosts from "#db/seedPosts";
+import { createNotification } from "#db/query/notifications";
 
 const customLocale = {
   title: "My custom locale",
@@ -85,7 +87,8 @@ async function seedPosts() {
       body: "Enjoy a romantic dinner with a panoramic city view, perfect for anniversaries or special occasions.",
       city: "New York",
       state: "NY",
-      image_url: "https://149480414.v2.pressablecdn.com/wp-content/uploads/2020/08/5be4a2_4b4f9bca21254299a75b8b5fa69060bfmv2.png", // rooftop dinner
+      image_url:
+        "https://149480414.v2.pressablecdn.com/wp-content/uploads/2020/08/5be4a2_4b4f9bca21254299a75b8b5fa69060bfmv2.png", // rooftop dinner
     },
     {
       title: "Kayaking Adventure",
@@ -99,30 +102,44 @@ async function seedPosts() {
       body: "Sip wine and get creative at this fun, interactive date night.",
       city: "San Francisco",
       state: "CA",
-      image_url: "https://thumbs.dreamstime.com/b/stunning-photo-captures-essence-romantic-rooftop-sunset-dinner-city-warm-glow-setting-sun-provides-beautiful-355057097.jpg", // wine & paint
+      image_url:
+        "https://thumbs.dreamstime.com/b/stunning-photo-captures-essence-romantic-rooftop-sunset-dinner-city-warm-glow-setting-sun-provides-beautiful-355057097.jpg", // wine & paint
     },
     {
       title: "Stargazing Picnic",
       body: "Pack a blanket and snacks for a quiet evening under the stars.",
       city: "Sedona",
       state: "AZ",
-      image_url: "https://i.pinimg.com/736x/0c/b1/d9/0cb1d9dcd7ef02d2859c6aad24bd3255.jpg", // stargazing
+      image_url:
+        "https://i.pinimg.com/736x/0c/b1/d9/0cb1d9dcd7ef02d2859c6aad24bd3255.jpg", // stargazing
     },
     {
       title: "Cooking Class for Two",
       body: "Learn how to make a new dish together with expert chefs.",
       city: "Chicago",
       state: "IL",
-      image_url: "https://www.westend61.de/images/0000848632pw/couple-enjoying-cooking-class-in-kitchen-CAIF08755.jpg", // cooking
+      image_url:
+        "https://www.westend61.de/images/0000848632pw/couple-enjoying-cooking-class-in-kitchen-CAIF08755.jpg", // cooking
     },
     {
       title: "Ghost Tour & Dessert Crawl",
       body: "Explore your city’s haunted history and top dessert spots.",
       city: "New Orleans",
       state: "LA",
-      image_url: "https://doorcountytrolley.com/wp-content/uploads/sites/4184/2020/05/Haunted-Pub-Crawl-image-3-e1643991857873.jpg?w=700&h=700&zoom=2", // spooky street
+      image_url:
+        "https://doorcountytrolley.com/wp-content/uploads/sites/4184/2020/05/Haunted-Pub-Crawl-image-3-e1643991857873.jpg?w=700&h=700&zoom=2", // spooky street
     },
   ];
+
+  for (const post of seededPosts) {
+    const created = await createPost({
+      user_id: users[0].id,
+      ...post,
+      price: customFaker.number.float({ min: 10, max: 100, fractionDigits: 2 }),
+    });
+
+    await createPostLocation({ post_id: created.id, ...post });
+  }
 
   for (let i = 0; i < 100; i++) {
     const idea = dateIdeas[i % dateIdeas.length];
@@ -181,7 +198,14 @@ async function seedFavorites() {
         post_id: post.id,
         user_id: user.id,
       });
-    } catch (ignored) {}
+      await createNotification({
+        user_id: post.user_id,
+        message: `${user.username} favorited your post: ${post.title}`,
+        duration: 5000,
+      });
+    } catch (e) {
+      console.log(e);
+    }
   }
 }
 
@@ -201,12 +225,16 @@ async function printStats() {
   const {
     rows: [favorites],
   } = await db.query("SELECT COUNT(*) FROM favorite_posts");
+  const {
+    rows: [notifications],
+  } = await db.query("SELECT COUNT(*) FROM notifications");
 
   console.log("Seeded Users: ", users);
   console.log("Seeded Categories: ", categories);
   console.log("Seeded Posts: ", posts);
   console.log("Seeded Cart Items: ", cart_items);
   console.log("Seeded Favorites: ", favorites);
+  console.log("Seeded Notifications: ", notifications);
 }
 
 function getRandomInt(min, max) {

@@ -8,7 +8,6 @@ import express from "express";
 import requireBody from "#middleware/requireBody";
 import { createJWT, validateJWT } from "#util/jwt";
 import requireUser from "#middleware/requireUser";
-import { getPostsByUserId } from "#db/query/posts";
 const router = express.Router();
 
 router.post(
@@ -63,14 +62,6 @@ router.post("/me", requireBody(["jwt"]), async (req, res) => {
   }
 
   res.status(200).json(user);
-});
-
-router.get("/posts/:page/:limit", requireUser, async (req, res) => {
-  const user = req.user;
-  const { page, limit } = req.params;
-  const posts = await getPostsByUserId(user.id, page, limit);
-
-  res.status(200).json(posts);
 });
 
 router.param("id", async (req, res, next, id) => {

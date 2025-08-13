@@ -1,5 +1,6 @@
 import db from "#db/client";
 import { isValid, isValidArray } from "#util/util";
+import { PUBLIC_USER_RETURNS } from "#db/query/users";
 
 const allowedFields = [
   "category_ids",
@@ -80,104 +81,101 @@ export async function getFilteredPosts({
   geolocation_latitude,
   geolocation_longitude,
   distance_miles,
-  userId,
+  userId, // filter by posts from a specific user
   searchQuery,
   page,
   limit,
+  favoritesOnly,
 }) {
-  console.log("getFilteredPosts variables:", {
-    min_date,
-    max_date,
-    min_price,
-    max_price,
-    category_ids,
-    geolocation_latitude,
-    geolocation_longitude,
-    distance_miles,
-    userId,
-    searchQuery,
-    page,
-    limit,
-  });
-
   const offset = (page - 1) * limit;
-
-  const params = [];
-  let paramIndex = 1;
+  const params = [offset, limit]; // Initialize params with guaranteed values to maintain placeholders for $1, $2
+  const orderClause = "posts.created_at DESC";
 
   const selectStatements = [
     "posts.*",
-    "row_to_json(u) as user",
+    "row_to_json(users) as user",
     "row_to_json(pl) AS location",
   ];
   const whereClauses = [];
-  const orderClauses = ["posts.created_at DESC"];
   const joinClauses = [
     "JOIN post_locations pl ON pl.post_id = posts.id",
-    "JOIN (SELECT id, username, avatar_url FROM users) u ON u.id = posts.user_id",
+    `JOIN (SELECT ${PUBLIC_USER_RETURNS} FROM users) users ON users.id = posts.user_id`,
   ];
 
   if (isValidArray([min_date, max_date])) {
+    const minIndex = params.length + 1;
+    const maxIndex = params.length + 2;
+
     whereClauses.push(
-      `posts.date >= $${paramIndex++} AND posts.date <= $${paramIndex++}`
+      `(posts.date >= $${minIndex} AND posts.date <= $${maxIndex})`
     );
     params.push(min_date, max_date);
   }
 
   if (isValidArray([min_price, max_price]) && min_price >= 0 && max_price > 0) {
+    const minIndex = params.length + 1;
+    const maxIndex = params.length + 2;
     whereClauses.push(
-      `posts.price >= $${paramIndex++} AND posts.price <= $${paramIndex++}`
+      `(posts.price >= $${minIndex} AND posts.price <= $${maxIndex})`
     );
     params.push(min_price, max_price);
   }
 
   if (isValid(searchQuery)) {
     whereClauses.push(
-      `(posts.title ILIKE $${paramIndex} OR posts.body ILIKE $${paramIndex++})`
+      `(posts.title ILIKE $${params.length + 1} OR posts.body ILIKE $${
+        params.length + 1
+      })`
     );
     params.push(`%${searchQuery}%`);
   }
 
   if (isValid(userId)) {
-    whereClauses.push(`posts.user_id = $${paramIndex++}`);
+    whereClauses.push(`posts.user_id = $${params.length + 1}`);
     params.push(userId);
   }
 
   if (isValidArray([geolocation_latitude, geolocation_longitude])) {
     const miles = distance_miles || 20;
     const meters = miles * 1609.34;
-    params.push(geolocation_latitude, geolocation_longitude, meters);
+    const latIndex = params.length + 1;
+    const longIndex = params.length + 2;
+    const distIndex = params.length + 3;
+
     whereClauses.push(
-      `earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($${paramIndex++}, $${paramIndex++})) < $${paramIndex++}`
+      `earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($${latIndex}, $${longIndex})) < $${distIndex}`
     );
 
-    orderClauses.splice(
-      0,
-      orderClauses.length,
-      `earth_distance(ll_to_earth(pl.geolocation_latitude, pl.geolocation_longitude), ll_to_earth($1, $2)) ASC`
-    );
+    params.push(geolocation_latitude, geolocation_longitude, meters);
   }
 
   if (isValid(category_ids) && category_ids.length > 0) {
     const categoryClauses = [];
     for (const categoryId of category_ids) {
-      categoryClauses.push(`posts.category_id = $${paramIndex++}`);
+      categoryClauses.push(`posts.category_id = $${params.length + 1}`);
       params.push(categoryId);
     }
     whereClauses.push(`(${categoryClauses.join(" OR ")})`);
   }
 
-  params.push(offset, limit);
+  if (favoritesOnly && isValid(userId)) {
+    joinClauses.push("JOIN favorite_posts f ON f.post_id = posts.id");
+    whereClauses.push(`f.user_id = $${params.length + 1}`);
+    params.push(userId);
+  }
 
   const SQL = `
     SELECT ${selectStatements.join(", ")}
     FROM posts
     ${joinClauses.join(" ")}
     ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}
-    ORDER BY ${orderClauses.join(", ")}
-    OFFSET $${paramIndex++}
-    LIMIT $${paramIndex++}
+    ORDER BY ${orderClause}
+    OFFSET $1
+    LIMIT $2
   `;
+
+  // console.log("Params: ", params);
+  // console.log("SQL: ", SQL);
 
   const { rows } = await db.query(SQL, params);
   return rows;
