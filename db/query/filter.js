@@ -130,11 +130,6 @@ export async function getFilteredPosts({
     params.push(`%${searchQuery}%`);
   }
 
-  if (isValid(userId)) {
-    whereClauses.push(`posts.user_id = $${params.length + 1}`);
-    params.push(userId);
-  }
-
   if (isValidArray([geolocation_latitude, geolocation_longitude])) {
     const miles = distance_miles || 20;
     const meters = miles * 1609.34;
@@ -161,6 +156,9 @@ export async function getFilteredPosts({
   if (favoritesOnly && isValid(userId)) {
     joinClauses.push("JOIN favorite_posts f ON f.post_id = posts.id");
     whereClauses.push(`f.user_id = $${params.length + 1}`);
+    params.push(userId);
+  } else if (isValid(userId)) {
+    whereClauses.push(`posts.user_id = $${params.length + 1}`);
     params.push(userId);
   }
 

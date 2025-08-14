@@ -17,6 +17,7 @@ import {
   getFilterByUserId,
   getFilteredPosts,
 } from "#db/query/filter";
+import { createNotification } from "#db/query/notifications";
 
 const router = express.Router();
 
@@ -83,6 +84,12 @@ router.post(
     if (!post_location) {
       return;
     }
+
+    await createNotification({
+      user_id: req.user.id,
+      duration: 5000,
+      message: `Your post "${post.title}" has been created successfully.`,
+    });
 
     res.status(201).json(await getPostById(post.id, req.user?.id));
   }
