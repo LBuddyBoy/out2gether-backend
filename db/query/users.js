@@ -19,16 +19,22 @@ export async function createUser({
   email,
   password,
   is_admin = false,
-  avatar_url = null,
+  avatar_url = "https://www.gravatar.com/avatar/?d=mp&s=64",
 }) {
-  const passwordInsert = password ? `crypt($3, gen_salt('bf'))` : `NULL`;
+  const selectStatements = ["username", "email", "is_admin", "avatar_url"];
+  const insertStatements = ["$1", "$2", "$3", "$4"];
   const values = password
-    ? [username, email, password, is_admin, avatar_url]
+    ? [username, email, is_admin, avatar_url, password]
     : [username, email, is_admin, avatar_url];
 
+  if (password) {
+    selectStatements.push("password");
+    insertStatements.push("crypt($5, gen_salt('bf'))");
+  }
+
   const SQL = `
-  INSERT INTO users(username, email, password, is_admin, avatar_url)
-  VALUES($1, $2, ${passwordInsert}, $4, $5)
+  INSERT INTO users(${selectStatements.join(", ")})
+  VALUES(${insertStatements.join(", ")})
   RETURNING ${PUBLIC_USER_RETURNS}
   `;
 
