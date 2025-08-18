@@ -15,7 +15,7 @@ CREATE TABLE users(
     id serial PRIMARY KEY,
     username text NOT NULL UNIQUE,
     email text NOT NULL UNIQUE,
-    password text NOT NULL,
+    password text,
     avatar_url text NOT NULL DEFAULT 'https://www.gravatar.com/avatar/?d=mp&s=64',
     is_admin boolean NOT NULL DEFAULT false
 );
