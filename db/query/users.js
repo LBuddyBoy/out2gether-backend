@@ -19,16 +19,22 @@ export async function createUser({
   email,
   password,
   is_admin = false,
+  avatar_url = null,
 }) {
+  const passwordInsert = password ? `crypt($3, gen_salt('bf'))` : `NULL`;
+  const values = password
+    ? [username, email, password, is_admin, avatar_url]
+    : [username, email, is_admin, avatar_url];
+
   const SQL = `
-    INSERT INTO users(username, email, password, is_admin)
-    VALUES($1, $2, crypt($3, gen_salt('bf')), $4)
-    RETURNING ${PUBLIC_USER_RETURNS}
-    `;
+  INSERT INTO users(username, email, password, is_admin, avatar_url)
+  VALUES($1, $2, ${passwordInsert}, $4, $5)
+  RETURNING ${PUBLIC_USER_RETURNS}
+  `;
 
   const {
     rows: [user],
-  } = await db.query(SQL, [username, email, password, is_admin]);
+  } = await db.query(SQL, values);
 
   return user;
 }
@@ -45,6 +51,18 @@ export async function getUsers() {
     `;
   const { rows } = await db.query(SQL);
   return rows;
+}
+
+export async function getUserByEmail(email) {
+  const SQL = `
+  SELECT ${PUBLIC_USER_RETURNS}
+  FROM users
+  WHERE email = $1
+  `;
+  const {
+    rows: [user],
+  } = await db.query(SQL, [email]);
+  return user;
 }
 
 /**
