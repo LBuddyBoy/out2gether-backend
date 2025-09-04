@@ -4,12 +4,12 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env server.js",
+    "start": "node server.js",
     "dev": "node --watch --env-file=.env server.js",
-    "prod:schema": "psql postgresql://backend_gqyg_user:vddQBJH5hfJOJgeKnk7Z61JFb7cC9Uec@dpg-d2d8q9juibrs739cji40-a.oregon-postgres.render.com/outtogether?sslmode=require -f ./db/schema.sql",
     "db:schema": "psql -d outtogether -f ./db/schema.sql",
     "db:seed": "node --env-file=.env db/seed.js",
     "db:reset": "npm run db:schema && npm run db:seed",
+    "prod:schema": "dotenv -e .env -- sh -c 'psql ${PROD_URL} -f ./db/schema.sql'",
     "prod:reset": "npm run prod:schema && npm run db:seed"
   },
   "keywords": [],
@@ -18,6 +18,8 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "dotenv-cli": "^10.0.0",
     "express": "^5.1.0",
     "google-auth-library": "^10.2.1",
     "jsonwebtoken": "^9.0.2",
